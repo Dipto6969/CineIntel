@@ -381,8 +381,8 @@ export function MediaInventoryActions({
             </button>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {allTagOptions.slice(0, 16).map((tag) => {
+          <div className="max-h-36 overflow-y-auto pr-1 flex flex-wrap gap-2">
+            {allTagOptions.map((tag) => {
               const active = selectedTagKeySet.has(normalizeTagKey(tag.name));
               return (
                 <button

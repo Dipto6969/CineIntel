@@ -48,6 +48,11 @@ type InventoryItem = {
   media_item?: MediaItem | null;
 };
 
+type TagValue = {
+  id: string;
+  name: string;
+};
+
 function posterUrl(path: string | null, size: "w185" | "w342" | "w500" = "w342") {
   if (!path) return null;
   return `https://image.tmdb.org/t/p/${size}${path}`;
@@ -122,11 +127,42 @@ export default function InventoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageJumpDraft, setPageJumpDraft] = useState("1");
   const [tagFilterDraft, setTagFilterDraft] = useState("");
+  const [userTags, setUserTags] = useState<TagValue[]>([]);
 
   const watchedItems = useMemo(
     () => inventory.filter((item) => item.status === "completed"),
     [inventory]
   );
+
+  useEffect(() => {
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await fetch("/api/tags");
+        if (!response.ok) return;
+        const data = (await response.json()) as TagValue[];
+        setUserTags(data || []);
+      } catch {
+        return;
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const tagSuggestions = useMemo(() => {
+    const combined = [...userTags];
+    const seen = new Set(combined.map((tag) => normalizeTagKey(tag.name)));
+
+    for (const tagName of CUSTOM_TAG_SUGGESTIONS) {
+      const key = normalizeTagKey(tagName);
+      if (!seen.has(key)) {
+        combined.push({ id: key, name: tagName });
+        seen.add(key);
+      }
+    }
+
+    return combined.sort((a, b) => a.name.localeCompare(b.name));
+  }, [userTags]);
 
   const filteredWatchedItems = useMemo(() => {
     const parsed = parseAdvancedQuery(filters.query);
@@ -534,26 +570,26 @@ export default function InventoryPage() {
                   className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-zinc-200"
                   placeholder="courtroom, time travel"
                 />
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {CUSTOM_TAG_SUGGESTIONS.slice(0, 12).map((tag) => {
+                <div className="mt-2 max-h-36 overflow-y-auto pr-1 flex flex-wrap gap-2">
+                  {tagSuggestions.map((tag) => {
                     const active = tagFilterDraft
                       .split(",")
                       .map((value) => normalizeTagKey(value))
-                      .includes(normalizeTagKey(tag));
+                      .includes(normalizeTagKey(tag.name));
                     return (
                       <button
-                        key={tag}
+                        key={tag.id}
                         type="button"
                         onClick={() => {
                           const current = tagFilterDraft
                             .split(",")
                             .map((value) => value.trim())
                             .filter(Boolean)
-                            .filter((value) => normalizeTagKey(value) !== normalizeTagKey(tag));
+                            .filter((value) => normalizeTagKey(value) !== normalizeTagKey(tag.name));
                           if (active) {
                             setTagFilterDraft(current.join(", "));
                           } else {
-                            setTagFilterDraft([...current, tag].join(", "));
+                            setTagFilterDraft([...current, tag.name].join(", "));
                           }
                         }}
                         className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
@@ -562,7 +598,7 @@ export default function InventoryPage() {
                             : "border-white/10 text-zinc-500 hover:text-zinc-200"
                         }`}
                       >
-                        {tag}
+                        {tag.name}
                       </button>
                     );
                   })}
