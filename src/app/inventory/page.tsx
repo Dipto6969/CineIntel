@@ -7,6 +7,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { useAuth } from "@/features/auth/auth-provider";
 import { DEFAULT_FILTERS, FilterState } from "@/lib/search/filter-schema";
 import { applyQueryClauses, evaluateAdvancedClauses, parseAdvancedQuery } from "@/lib/search/query-parser";
+import { CUSTOM_TAG_SUGGESTIONS, normalizeTagKey } from "@/lib/tags";
 
 type MediaType = "movie" | "tv";
 type WatchStatus = "completed" | "dropped" | "on_hold" | "plan_to_watch";
@@ -43,6 +44,7 @@ type InventoryItem = {
   notes: string | null;
   is_favorite: boolean;
   created_at?: string | null;
+  tags?: { id: string; name: string }[];
   media_item?: MediaItem | null;
 };
 
@@ -118,6 +120,7 @@ export default function InventoryPage() {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [viewMode, setViewMode] = useState<InventoryViewMode>("recent");
   const [currentPage, setCurrentPage] = useState(1);
+  const [tagFilterDraft, setTagFilterDraft] = useState("");
 
   const watchedItems = useMemo(
     () => inventory.filter((item) => item.status === "completed"),
@@ -132,6 +135,12 @@ export default function InventoryPage() {
     const genreSet = new Set(mergedFilters.genres.map((value) => value.toLowerCase()));
     const countrySet = new Set(mergedFilters.countries.map((value) => value.toLowerCase()));
     const languageValue = mergedFilters.language?.toLowerCase();
+    const tagFilterSet = new Set(
+      tagFilterDraft
+        .split(",")
+        .map((value) => normalizeTagKey(value))
+        .filter(Boolean)
+    );
 
     return watchedItems.filter((item) => {
       const media = item.media_item;
@@ -197,6 +206,12 @@ export default function InventoryPage() {
         if (!matches) return false;
       }
 
+      if (tagFilterSet.size > 0) {
+        const itemTags = (item.tags || []).map((tag) => normalizeTagKey(tag.name));
+        const matches = Array.from(tagFilterSet).every((tag) => itemTags.includes(tag));
+        if (!matches) return false;
+      }
+
       if (clauses.length > 0) {
         const clauseMatch = evaluateAdvancedClauses(clauses, (clause) => matchesInventoryClause(clause, item, media));
         if (!clauseMatch) return false;
@@ -212,6 +227,7 @@ export default function InventoryPage() {
         ...(media.cast_list || []),
         ...(media.directors || []),
         ...(media.studios || []),
+        ...(item.tags || []).map((tag) => tag.name),
       ]
         .filter(Boolean)
         .join(" ")
@@ -219,7 +235,7 @@ export default function InventoryPage() {
 
       return searchable.includes(trimmed);
     });
-  }, [filters, watchedItems]);
+  }, [filters, tagFilterDraft, watchedItems]);
 
   const totalPages = Math.max(1, Math.ceil(filteredWatchedItems.length / PAGE_SIZE));
 
@@ -502,6 +518,48 @@ export default function InventoryPage() {
                 />
               </div>
               <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-2">Custom tags</div>
+                <input
+                  value={tagFilterDraft}
+                  onChange={(event) => setTagFilterDraft(event.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-zinc-200"
+                  placeholder="courtroom, time travel"
+                />
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {CUSTOM_TAG_SUGGESTIONS.slice(0, 12).map((tag) => {
+                    const active = tagFilterDraft
+                      .split(",")
+                      .map((value) => normalizeTagKey(value))
+                      .includes(normalizeTagKey(tag));
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => {
+                          const current = tagFilterDraft
+                            .split(",")
+                            .map((value) => value.trim())
+                            .filter(Boolean)
+                            .filter((value) => normalizeTagKey(value) !== normalizeTagKey(tag));
+                          if (active) {
+                            setTagFilterDraft(current.join(", "));
+                          } else {
+                            setTagFilterDraft([...current, tag].join(", "));
+                          }
+                        }}
+                        className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                          active
+                            ? "border-[oklch(0.70_0.16_195)]/30 bg-[oklch(0.70_0.16_195)]/10 text-[oklch(0.70_0.16_195)]"
+                            : "border-white/10 text-zinc-500 hover:text-zinc-200"
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
                 <div className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-2">Country</div>
                 <input
                   value={filters.countries.join(", ")}
@@ -642,6 +700,12 @@ export default function InventoryPage() {
                         <h3 className="text-sm font-semibold text-white leading-tight line-clamp-1 group-hover/card:text-[oklch(0.70_0.16_195)] transition">
                           {title}
                         </h3>
+                          {item.tags?.length ? (
+                            <div className="text-[11px] text-zinc-500 line-clamp-1">
+                              {item.tags.slice(0, 2).map((tag) => tag.name).join(", ")}
+                              {item.tags.length > 2 ? ` +${item.tags.length - 2}` : ""}
+                            </div>
+                          ) : null}
                         <button
                           onClick={(event) => {
                             event.preventDefault();

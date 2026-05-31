@@ -1,10 +1,13 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Archive, Bookmark, CheckCircle2, Heart, Loader2, Star } from "lucide-react";
+import { Archive, Bookmark, CheckCircle2, Heart, Loader2, Plus, Star, X } from "lucide-react";
 import type { MediaType } from "@/types/media";
+import { CUSTOM_TAG_SUGGESTIONS, formatTagLabel, normalizeTagKey } from "@/lib/tags";
 
 type WatchStatus = "completed" | "dropped" | "on_hold" | "plan_to_watch";
+
+type TagValue = { id: string; name: string };
 
 type InventoryRecord = {
   id: string;
@@ -13,6 +16,7 @@ type InventoryRecord = {
   rating: number | null;
   watch_dates: string[];
   is_favorite: boolean;
+  tags: TagValue[];
 };
 
 type MediaInventoryActionsProps = {
@@ -37,6 +41,9 @@ export function MediaInventoryActions({
   initialInventory,
 }: MediaInventoryActionsProps) {
   const [inventory, setInventory] = useState<InventoryRecord | null>(initialInventory);
+  const [availableTags, setAvailableTags] = useState<TagValue[]>(initialInventory?.tags || []);
+  const [selectedTags, setSelectedTags] = useState<TagValue[]>(initialInventory?.tags || []);
+  const [tagDraft, setTagDraft] = useState("");
   const [ratingDraft, setRatingDraft] = useState(
     initialInventory?.rating !== null && initialInventory?.rating !== undefined
       ? String(initialInventory.rating)
@@ -58,6 +65,9 @@ export function MediaInventoryActions({
         const data = (await response.json()) as InventoryRecord[];
         const match = data.find((item) => item.media_item_id === currentMediaItemId) || null;
         setInventory(match);
+        if (match?.tags?.length) {
+          setSelectedTags(match.tags);
+        }
         if (match?.rating !== null && match?.rating !== undefined) {
           setRatingDraft(String(match.rating));
         }
@@ -68,6 +78,96 @@ export function MediaInventoryActions({
 
     return () => window.clearTimeout(timer);
   }, [currentMediaItemId]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await fetch("/api/tags");
+        if (!response.ok) return;
+        const data = (await response.json()) as TagValue[];
+        setAvailableTags(data || []);
+      } catch {
+        return;
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const selectedTagKeySet = useMemo(
+    () => new Set(selectedTags.map((tag) => normalizeTagKey(tag.name))),
+    [selectedTags]
+  );
+
+  const allTagOptions = useMemo(() => {
+    const combined = [...availableTags];
+    const seen = new Set(combined.map((tag) => normalizeTagKey(tag.name)));
+
+    for (const tagName of CUSTOM_TAG_SUGGESTIONS) {
+      const key = normalizeTagKey(tagName);
+      if (!seen.has(key)) {
+        combined.push({ id: key, name: tagName });
+        seen.add(key);
+      }
+    }
+
+    return combined.sort((a, b) => a.name.localeCompare(b.name));
+  }, [availableTags]);
+
+  const addTagByName = async (rawName: string) => {
+    const name = formatTagLabel(rawName);
+    if (!name) return;
+
+    const normalized = normalizeTagKey(name);
+    const existingSelected = selectedTags.find((tag) => normalizeTagKey(tag.name) === normalized);
+    if (existingSelected) return;
+
+    let tag = availableTags.find((entry) => normalizeTagKey(entry.name) === normalized) || null;
+
+    if (!tag) {
+      const response = await fetch("/api/tags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => ({}));
+        throw new Error(errorPayload.error || "Could not create tag");
+      }
+
+      tag = (await response.json()) as TagValue;
+      setAvailableTags((current) => {
+        if (current.some((entry) => normalizeTagKey(entry.name) === normalized)) return current;
+        return [...current, tag as TagValue];
+      });
+    }
+
+    setSelectedTags((current) => [...current, tag as TagValue].sort((a, b) => a.name.localeCompare(b.name)));
+  };
+
+  const commitTagDraft = async () => {
+    const next = tagDraft.replace(/,$/, "").trim();
+    if (!next) return;
+
+    try {
+      await addTagByName(next);
+      setTagDraft("");
+    } catch (error: unknown) {
+      setNotice(error instanceof Error ? error.message : "Could not add tag");
+    }
+  };
+
+  const toggleTag = async (tagName: string) => {
+    const normalized = normalizeTagKey(tagName);
+    const existing = selectedTags.find((tag) => normalizeTagKey(tag.name) === normalized);
+    if (existing) {
+      setSelectedTags((current) => current.filter((tag) => normalizeTagKey(tag.name) !== normalized));
+      return;
+    }
+
+    await addTagByName(tagName);
+  };
 
   const saveInventory = async (
     action: string,
@@ -98,6 +198,7 @@ export function MediaInventoryActions({
             payload.isFavorite !== undefined
               ? payload.isFavorite
               : inventory?.is_favorite ?? false,
+          tagIds: selectedTags.map((tag) => tag.id),
         }),
       });
 
@@ -108,6 +209,9 @@ export function MediaInventoryActions({
 
       const updated = (await response.json()) as InventoryRecord;
       setInventory(updated);
+      if (updated.tags?.length) {
+        setSelectedTags(updated.tags);
+      }
       setNotice("Saved");
     } catch (error: unknown) {
       setNotice(error instanceof Error ? error.message : "Could not update this title");
@@ -220,6 +324,82 @@ export function MediaInventoryActions({
             {busyAction === "rate" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Star className="h-4 w-4" />}
             Save Rating
           </button>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-black/25 p-4 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs uppercase tracking-[0.2em] text-zinc-500">Custom tags</div>
+              <div className="text-xs text-zinc-600 mt-1">Add tags like courtroom, time travel, or psychological.</div>
+            </div>
+            {selectedTags.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setSelectedTags([])}
+                className="text-xs font-semibold text-zinc-500 hover:text-zinc-200"
+              >
+                Clear
+              </button>
+            ) : null}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {selectedTags.map((tag) => (
+              <button
+                key={tag.id}
+                type="button"
+                onClick={() => void toggleTag(tag.name)}
+                className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.70_0.16_195)]/30 bg-[oklch(0.70_0.16_195)]/10 px-3 py-1.5 text-xs font-semibold text-[oklch(0.70_0.16_195)]"
+                title="Remove tag"
+              >
+                {tag.name}
+                <X className="h-3 w-3" />
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <input
+              value={tagDraft}
+              onChange={(event) => setTagDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === ",") {
+                  event.preventDefault();
+                  void commitTagDraft();
+                }
+              }}
+              className="flex-1 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-[oklch(0.70_0.16_195)]"
+              placeholder="Type a tag and press Enter"
+            />
+            <button
+              type="button"
+              onClick={() => void commitTagDraft()}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-200 hover:border-[oklch(0.70_0.16_195)]/30 hover:text-white"
+            >
+              <Plus className="h-4 w-4" />
+              Add Tag
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {allTagOptions.slice(0, 16).map((tag) => {
+              const active = selectedTagKeySet.has(normalizeTagKey(tag.name));
+              return (
+                <button
+                  key={tag.id}
+                  type="button"
+                  onClick={() => void toggleTag(tag.name)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    active
+                      ? "border-[oklch(0.70_0.16_195)]/30 bg-[oklch(0.70_0.16_195)]/10 text-[oklch(0.70_0.16_195)]"
+                      : "border-white/10 bg-white/5 text-zinc-400 hover:border-white/20 hover:text-zinc-200"
+                  }`}
+                >
+                  {tag.name}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {notice && (

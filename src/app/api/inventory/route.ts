@@ -195,7 +195,23 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json(inserted, { status: 201 });
+  const { data: tagLinks, error: tagFetchError } = await supabase
+    .from("inventory_tags")
+    .select("inventory_id, tag:tags(id, name)")
+    .eq("inventory_id", inserted.id);
+
+  if (tagFetchError) {
+    return NextResponse.json({ error: tagFetchError.message }, { status: 500 });
+  }
+
+  const tags = (tagLinks as TagLink[] | null)
+    ?.flatMap((link) => {
+      if (!link.tag) return [];
+      return Array.isArray(link.tag) ? link.tag : [link.tag];
+    })
+    .filter(Boolean);
+
+  return NextResponse.json({ ...inserted, tags: tags || [] }, { status: 201 });
 }
 
 export type { InventoryUpdateBody };
