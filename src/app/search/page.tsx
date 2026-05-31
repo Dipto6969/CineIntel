@@ -685,11 +685,12 @@ function SearchContent() {
             </p>
           </div>
 
-          <div className="glass-panel rounded-2xl p-5 mb-8">
+          <div className="glass-panel relative z-20 rounded-2xl p-5 mb-8">
             <div className="flex flex-col gap-4">
               <SearchSuggestInput
                 key={filters.query}
                 initialQuery={filters.query}
+                dropdownPlacement="below"
                 onSearch={(term) => {
                   const next = { ...filters, query: term };
                   setFilters(next);
@@ -744,7 +745,7 @@ function SearchContent() {
               </div>
 
               {(group.type === "movie" || group.type === "tv" || group.type === "collection") && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                <div className="relative z-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
                   {group.results.map((entity) => {
                     const image = getEntityImage(entity);
                     const isMovieOrTv = entity.type === "movie" || entity.type === "tv";
@@ -756,7 +757,7 @@ function SearchContent() {
                     const isSavingInventory = savingKeys[`${id}-completed`];
 
                     return (
-                      <div key={`${entity.type}-${entity.id}`} className="group/card relative flex flex-col gap-3">
+                      <div key={`${entity.type}-${entity.id}`} className="group/card relative z-0 flex flex-col gap-3">
                         <Link href={getEntityLink(entity)}>
                           <div className="aspect-2/3 w-full rounded-2xl overflow-hidden bg-[#11131a] border border-white/5 relative transition-all duration-300 group-hover/card:scale-105 group-hover/card:shadow-[0_8px_30px_rgba(0,0,0,0.5)] group-hover/card:z-10 group-hover/card:border-white/20">
                             {image ? (

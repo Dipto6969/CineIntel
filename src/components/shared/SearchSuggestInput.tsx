@@ -13,6 +13,7 @@ type SearchEntity = {
   type: SearchEntityType;
   year?: string | null;
   rating?: number | null;
+  imagePath?: string | null;
   posterPath?: string | null;
   profilePath?: string | null;
   backdropPath?: string | null;
@@ -35,11 +36,12 @@ type SearchSuggestInputProps = {
   shellClassName?: string;
   inputClassName?: string;
   placeholder?: string;
+  dropdownPlacement?: "below" | "above";
   onSearch?: (query: string) => void;
 };
 
 function getEntityImage(entity: SearchEntity) {
-  const path = entity.posterPath || entity.profilePath || entity.backdropPath;
+  const path = entity.posterPath || entity.profilePath || entity.backdropPath || entity.imagePath;
   return path ? `https://image.tmdb.org/t/p/w185${path}` : null;
 }
 
@@ -56,9 +58,11 @@ export function SearchSuggestInput({
   shellClassName = "",
   inputClassName = "",
   placeholder = "Search movies, series, actors, genres...",
+  dropdownPlacement = "below",
   onSearch,
 }: SearchSuggestInputProps) {
   const router = useRouter();
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const [query, setQuery] = useState(initialQuery);
   const [groups, setGroups] = useState<SearchGroup[]>([]);
   const [isSuggesting, setIsSuggesting] = useState(false);
@@ -137,9 +141,12 @@ export function SearchSuggestInput({
   }, [groups, activeType, query]);
 
   useEffect(() => {
-    const firstAvailable = filteredGroups.find((group) => group.results.length > 0);
-    if (firstAvailable && firstAvailable.type !== activeType) {
-      setActiveType(firstAvailable.type);
+    const activeGroupExists = filteredGroups.some((group) => group.type === activeType && group.results.length > 0);
+    if (!activeGroupExists) {
+      const firstAvailable = filteredGroups.find((group) => group.results.length > 0);
+      if (firstAvailable) {
+        setActiveType(firstAvailable.type);
+      }
     }
   }, [activeType, filteredGroups]);
 
@@ -156,6 +163,18 @@ export function SearchSuggestInput({
       setActivePage(Math.max(0, pageCount - 1));
     }
   }, [activePage, pageCount]);
+
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (rootRef.current && target && !rootRef.current.contains(target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, []);
 
   const goToEntity = (entity: SearchEntity) => {
     setIsOpen(false);
@@ -204,7 +223,7 @@ export function SearchSuggestInput({
   };
 
   return (
-    <div className="relative w-full">
+    <div ref={rootRef} className="relative w-full">
       <form onSubmit={handleSubmit} className={shellClassName}>
         <Search className="w-5 h-5 text-zinc-400 group-hover:text-white transition-colors shrink-0" />
         <input
@@ -244,7 +263,11 @@ export function SearchSuggestInput({
       </form>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-3 overflow-hidden rounded-2xl border border-white/10 bg-[#0b0d12]/95 shadow-[0_24px_60px_rgba(0,0,0,0.55)] backdrop-blur-2xl z-80">
+        <div
+          className={`absolute left-0 right-0 isolate overflow-hidden rounded-2xl border border-white/10 bg-[#0b0d12] shadow-[0_24px_60px_rgba(0,0,0,0.65)] z-120 ${
+            dropdownPlacement === "above" ? "bottom-full mb-3" : "top-full mt-3"
+          }`}
+        >
           {isSuggesting ? (
             <div className="p-2 space-y-1">
               {Array.from({ length: skeletonCount }).map((_, index) => (
