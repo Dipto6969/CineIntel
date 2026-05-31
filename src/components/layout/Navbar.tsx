@@ -6,7 +6,15 @@ import { Archive, Film, LogOut, User, Bookmark, Search as SearchIcon } from "luc
 import { useAuth } from "@/features/auth/auth-provider";
 import { SearchSuggestInput } from "@/components/shared/SearchSuggestInput";
 
-export function Navbar({ initialSearchQuery = "", transparentOnTop = true }: { initialSearchQuery?: string, transparentOnTop?: boolean }) {
+export function Navbar({
+  initialSearchQuery = "",
+  transparentOnTop = true,
+  showSearch = true,
+}: {
+  initialSearchQuery?: string;
+  transparentOnTop?: boolean;
+  showSearch?: boolean;
+}) {
   const [scrolled, setScrolled] = useState(!transparentOnTop);
   const { user, signOut } = useAuth();
 
@@ -41,19 +49,21 @@ export function Navbar({ initialSearchQuery = "", transparentOnTop = true }: { i
 
         {/* Search Engine - The Identity */}
         <div className="flex justify-center w-full max-w-2xl mx-auto">
-          <SearchSuggestInput
-            key={initialSearchQuery}
-            initialQuery={initialSearchQuery}
-            compact={scrolled || !transparentOnTop}
-            shellClassName={`w-full flex items-center gap-3 transition-all duration-300 rounded-full group ${
-              scrolled || !transparentOnTop
-                ? "bg-white/10 hover:bg-white/15 border border-white/10 px-4 py-2"
-                : "bg-black/30 hover:bg-black/50 backdrop-blur-md border border-white/20 px-5 py-3 shadow-[0_0_40px_rgba(0,0,0,0.3)] hover:border-white/40 hover:shadow-[0_0_50px_rgba(255,255,255,0.1)]"
-            }`}
-            inputClassName={`flex-1 min-w-0 bg-transparent border-none outline-none font-medium placeholder-zinc-500 focus:placeholder-zinc-300 transition-colors ${
-                scrolled || !transparentOnTop ? "text-sm text-zinc-100" : "text-base text-white"
-            }`}
-          />
+          {showSearch ? (
+            <SearchSuggestInput
+              key={initialSearchQuery}
+              initialQuery={initialSearchQuery}
+              compact={scrolled || !transparentOnTop}
+              shellClassName={`w-full flex items-center gap-3 transition-all duration-300 rounded-full group ${
+                scrolled || !transparentOnTop
+                  ? "bg-white/10 hover:bg-white/15 border border-white/10 px-4 py-2"
+                  : "bg-black/30 hover:bg-black/50 backdrop-blur-md border border-white/20 px-5 py-3 shadow-[0_0_40px_rgba(0,0,0,0.3)] hover:border-white/40 hover:shadow-[0_0_50px_rgba(255,255,255,0.1)]"
+              }`}
+              inputClassName={`flex-1 min-w-0 bg-transparent border-none outline-none font-medium placeholder-zinc-500 focus:placeholder-zinc-300 transition-colors ${
+                  scrolled || !transparentOnTop ? "text-sm text-zinc-100" : "text-base text-white"
+              }`}
+            />
+          ) : null}
         </div>
 
         {/* User Operations */}

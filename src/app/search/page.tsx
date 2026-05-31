@@ -389,7 +389,7 @@ function SearchContent() {
 
   return (
     <div className="min-h-screen w-full bg-[#050608] text-zinc-100 flex flex-col font-sans selection:bg-[oklch(0.70_0.16_195)]/30 selection:text-white pb-10">
-      <Navbar transparentOnTop={false} initialSearchQuery={filters.query} />
+      <Navbar transparentOnTop={false} showSearch={false} initialSearchQuery={filters.query} />
 
       <main className="flex-1 max-w-400 mx-auto w-full px-6 md:px-12 py-10 mt-24 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8">
         <aside className="glass-panel rounded-3xl p-5 space-y-6 h-fit">

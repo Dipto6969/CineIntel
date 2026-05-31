@@ -13,7 +13,7 @@ type MediaType = "movie" | "tv";
 type WatchStatus = "completed" | "dropped" | "on_hold" | "plan_to_watch";
 type InventoryViewMode = "recent" | "all";
 
-const PAGE_SIZE = 48;
+const PAGE_SIZE = 24;
 const RECENT_LIMIT = 24;
 
 type MediaItem = {
@@ -120,6 +120,7 @@ export default function InventoryPage() {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [viewMode, setViewMode] = useState<InventoryViewMode>("recent");
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageJumpDraft, setPageJumpDraft] = useState("1");
   const [tagFilterDraft, setTagFilterDraft] = useState("");
 
   const watchedItems = useMemo(
@@ -150,6 +151,9 @@ export default function InventoryPage() {
       }
       if (mergedFilters.favoritesOnly && !item.is_favorite) return false;
       if (mergedFilters.personalRatingMin && (item.rating ?? 0) < mergedFilters.personalRatingMin) {
+        return false;
+      }
+      if (mergedFilters.personalRatingMax && (item.rating ?? 0) > mergedFilters.personalRatingMax) {
         return false;
       }
       if (mergedFilters.tmdbMin && (media.vote_average ?? 0) < mergedFilters.tmdbMin) return false;
@@ -307,7 +311,12 @@ export default function InventoryPage() {
 
   useEffect(() => {
     setCurrentPage(1);
+    setPageJumpDraft("1");
   }, [filters, viewMode]);
+
+  useEffect(() => {
+    setPageJumpDraft(String(currentPage));
+  }, [currentPage]);
 
   const handleDeleteInventory = async (inventoryId: string) => {
     setNotice(null);
@@ -334,7 +343,7 @@ export default function InventoryPage() {
 
   return (
     <div className="min-h-screen w-full bg-[#050608] text-zinc-100 flex flex-col font-sans selection:bg-[oklch(0.70_0.16_195)]/30 selection:text-white pb-10">
-      <Navbar transparentOnTop={false} />
+      <Navbar transparentOnTop={false} showSearch={false} />
 
       <main className="flex-1 max-w-400 mx-auto w-full px-6 md:px-12 py-10 mt-24">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
@@ -612,6 +621,17 @@ export default function InventoryPage() {
                 />
               </div>
               <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-2">Your rating max</div>
+                <input
+                  type="number"
+                  step="0.5"
+                  value={filters.personalRatingMax || ""}
+                  onChange={(event) => setFilters((prev) => ({ ...prev, personalRatingMax: Number(event.target.value) || undefined }))}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-zinc-200"
+                  placeholder="10"
+                />
+              </div>
+              <div>
                 <div className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-2">Favorites only</div>
                 <button
                   type="button"
@@ -724,8 +744,37 @@ export default function InventoryPage() {
 
               {viewMode === "all" && totalPages > 1 && (
                 <div className="mt-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-white/10 pt-6">
-                  <div className="text-sm text-zinc-500">
-                    Page {currentPage} of {totalPages} · {PAGE_SIZE} titles per page
+                  <div className="flex items-center gap-3 text-sm text-zinc-500">
+                    <span>
+                      Page {currentPage} of {totalPages} · {PAGE_SIZE} titles per page
+                    </span>
+                    <label className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/25 px-3 py-2 text-xs text-zinc-400">
+                      Go to page
+                      <input
+                        type="number"
+                        min={1}
+                        max={totalPages}
+                        value={pageJumpDraft}
+                        onChange={(event) => setPageJumpDraft(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            const nextPage = Math.min(totalPages, Math.max(1, Number(pageJumpDraft) || 1));
+                            setCurrentPage(nextPage);
+                          }
+                        }}
+                        className="w-16 bg-transparent text-sm font-semibold text-white outline-none"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextPage = Math.min(totalPages, Math.max(1, Number(pageJumpDraft) || 1));
+                        setCurrentPage(nextPage);
+                      }}
+                      className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-zinc-300 hover:bg-white/5 transition"
+                    >
+                      Go
+                    </button>
                   </div>
                   <div className="flex items-center gap-2">
                     <button

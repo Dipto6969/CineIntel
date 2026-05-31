@@ -1,10 +1,33 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Search, Star } from "lucide-react";
-import type { SearchEntity, SearchEntityType, SearchGroup, UniversalSearchResponse } from "@/types/universal-search";
+
+type SearchEntityType = "movie" | "tv" | "person" | "collection";
+
+type SearchEntity = {
+  id: number;
+  title: string;
+  type: SearchEntityType;
+  year?: string | null;
+  rating?: number | null;
+  posterPath?: string | null;
+  profilePath?: string | null;
+  backdropPath?: string | null;
+  subtitle?: string | null;
+};
+
+type SearchGroup = {
+  type: SearchEntityType;
+  label: string;
+  results: SearchEntity[];
+};
+
+type UniversalSearchResponse = {
+  groups?: SearchGroup[];
+};
 
 type SearchSuggestInputProps = {
   initialQuery?: string;
@@ -15,27 +38,12 @@ type SearchSuggestInputProps = {
   onSearch?: (query: string) => void;
 };
 
-function posterUrl(path: string | null, size: "w92" | "w185" = "w92") {
-  if (!path) return null;
-  return `https://image.tmdb.org/t/p/${size}${path}`;
-}
-
-function profileUrl(path: string | null, size: "w92" | "w185" = "w92") {
-  if (!path) return null;
-  return `https://image.tmdb.org/t/p/${size}${path}`;
-}
-
 function getEntityImage(entity: SearchEntity) {
-  if (!entity.imagePath) return null;
-  return entity.imageType === "profile" ? profileUrl(entity.imagePath) : posterUrl(entity.imagePath);
+  const path = entity.posterPath || entity.profilePath || entity.backdropPath;
+  return path ? `https://image.tmdb.org/t/p/w185${path}` : null;
 }
 
 function getEntityMeta(entity: SearchEntity) {
-  if (entity.type === "person") {
-    const role = entity.role || entity.subtitle || "Person";
-    const knownFor = entity.knownFor?.length ? ` · ${entity.knownFor.join(", ")}` : "";
-    return `${role}${knownFor}`;
-  }
   if (entity.type === "movie" || entity.type === "tv") {
     return [entity.type === "movie" ? "Movie" : "Series", entity.year || "--"].join(" · ");
   }
@@ -56,37 +64,21 @@ export function SearchSuggestInput({
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [activePage, setActivePage] = useState(0);
   const [activeType, setActiveType] = useState<SearchEntityType>("movie");
   const abortRef = useRef<AbortController | null>(null);
   const cacheRef = useRef(new Map<string, { ts: number; data: UniversalSearchResponse }>());
   const cacheTtlMs = 2 * 60 * 1000;
 
-  const perGroupLimit = useMemo(() => (compact ? 4 : 6), [compact]);
+  const suggestionPageSize = useMemo(() => (compact ? 6 : 7), [compact]);
+  const perGroupLimit = useMemo(() => suggestionPageSize * 3, [suggestionPageSize]);
   const skeletonCount = useMemo(() => (compact ? 3 : 4), [compact]);
   const visibleTypes: SearchEntityType[] = ["movie", "tv", "person", "collection"];
 
-  const filteredGroups = useMemo(() => {
-    return groups
-      .filter((group) => visibleTypes.includes(group.type))
-      .map((group) => ({
-        ...group,
-        results: group.results,
-      }));
-  }, [groups]);
-
-  const flatItems = useMemo(() => {
-    return filteredGroups
-      .filter((group) => group.type === activeType)
-      .flatMap((group) => group.results.map((entity) => ({ group, entity })));
-  }, [filteredGroups, activeType]);
-
-  const indexLookup = useMemo(() => {
-    const map = new Map<string, number>();
-    flatItems.forEach((item, index) => {
-      map.set(`${item.entity.type}-${item.entity.id}`, index);
-    });
-    return map;
-  }, [flatItems]);
+  const filteredGroups = useMemo(
+    () => groups.filter((group) => visibleTypes.includes(group.type)),
+    [groups]
+  );
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -102,7 +94,7 @@ export function SearchSuggestInput({
     const cacheKey = `${trimmed.toLowerCase()}::${perGroupLimit}`;
     const cached = cacheRef.current.get(cacheKey);
     if (cached && Date.now() - cached.ts < cacheTtlMs) {
-      setGroups(cached.data.groups);
+      setGroups(cached.data.groups || []);
       setIsSuggesting(false);
       setIsOpen(true);
       return;
@@ -141,7 +133,29 @@ export function SearchSuggestInput({
 
   useEffect(() => {
     setActiveIndex(-1);
-  }, [groups, activeType]);
+    setActivePage(0);
+  }, [groups, activeType, query]);
+
+  useEffect(() => {
+    const firstAvailable = filteredGroups.find((group) => group.results.length > 0);
+    if (firstAvailable && firstAvailable.type !== activeType) {
+      setActiveType(firstAvailable.type);
+    }
+  }, [activeType, filteredGroups]);
+
+  const activeGroup = filteredGroups.find((group) => group.type === activeType);
+  const activeGroupResults = activeGroup?.results || [];
+  const pageCount = Math.max(1, Math.ceil(activeGroupResults.length / suggestionPageSize));
+  const visibleResults = activeGroupResults.slice(
+    activePage * suggestionPageSize,
+    activePage * suggestionPageSize + suggestionPageSize
+  );
+
+  useEffect(() => {
+    if (activePage > pageCount - 1) {
+      setActivePage(Math.max(0, pageCount - 1));
+    }
+  }, [activePage, pageCount]);
 
   const goToEntity = (entity: SearchEntity) => {
     setIsOpen(false);
@@ -156,6 +170,8 @@ export function SearchSuggestInput({
     const trimmed = query.trim();
     if (!trimmed) return;
     setIsOpen(false);
+    setActiveIndex(-1);
+    setActivePage(0);
     if (onSearch) {
       onSearch(trimmed);
       return;
@@ -169,25 +185,23 @@ export function SearchSuggestInput({
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!isOpen || flatItems.length === 0) return;
+    if (!isOpen || visibleResults.length === 0) return;
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      setActiveIndex((current) => (current + 1) % flatItems.length);
+      setActiveIndex((current) => (current + 1) % visibleResults.length);
     }
     if (event.key === "ArrowUp") {
       event.preventDefault();
-      setActiveIndex((current) => (current <= 0 ? flatItems.length - 1 : current - 1));
+      setActiveIndex((current) => (current <= 0 ? visibleResults.length - 1 : current - 1));
     }
     if (event.key === "Enter" && activeIndex >= 0) {
       event.preventDefault();
-      goToEntity(flatItems[activeIndex].entity);
+      goToEntity(visibleResults[activeIndex]);
     }
     if (event.key === "Escape") {
       setIsOpen(false);
     }
   };
-
-  const activeGroup = filteredGroups.find((group) => group.type === activeType);
 
   return (
     <div className="relative w-full">
@@ -199,6 +213,7 @@ export function SearchSuggestInput({
             const value = event.target.value;
             setQuery(value);
             setActiveIndex(-1);
+            setActivePage(0);
             if (value.trim().length >= 2) {
               setIsSuggesting(true);
               setIsOpen(true);
@@ -242,7 +257,7 @@ export function SearchSuggestInput({
                 </div>
               ))}
             </div>
-          ) : flatItems.length > 0 ? (
+          ) : activeGroup ? (
             <div className="p-2">
               <div className="flex flex-wrap items-center gap-2 px-2 pt-2 pb-3 border-b border-white/5">
                 {filteredGroups
@@ -253,8 +268,9 @@ export function SearchSuggestInput({
                       type="button"
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => {
-                        setActiveType(group.type as SearchEntityType);
+                        setActiveType(group.type);
                         setActiveIndex(-1);
+                        setActivePage(0);
                       }}
                       className={`px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-[0.2em] border transition ${
                         activeType === group.type
@@ -267,48 +283,79 @@ export function SearchSuggestInput({
                   ))}
               </div>
 
-              {activeGroup ? (
-                <div className="pt-2">
-                  {activeGroup.results.map((entity) => {
-                    const image = getEntityImage(entity);
-                    const isActive =
-                      indexLookup.get(`${entity.type}-${entity.id}`) === activeIndex;
-                    const meta = getEntityMeta(entity);
+              <div className="pt-2">
+                {visibleResults.map((entity, index) => {
+                  const image = getEntityImage(entity);
+                  const isActive = index === activeIndex;
+                  const meta = getEntityMeta(entity);
 
-                    return (
-                      <button
-                        type="button"
-                        key={`${entity.type}-${entity.id}`}
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => goToEntity(entity)}
-                        className={`w-full flex items-center gap-3 rounded-xl px-3 py-2 text-left transition ${
-                          isActive ? "bg-white/12" : "hover:bg-white/8"
-                        }`}
-                      >
-                        <div className="h-14 w-10 rounded-lg bg-black/40 border border-white/10 overflow-hidden shrink-0 relative">
-                          {image ? (
-                            <Image src={image} alt="" fill sizes="40px" className="object-cover" />
-                          ) : (
-                            <div className="h-full w-full" />
+                  return (
+                    <button
+                      type="button"
+                      key={`${entity.type}-${entity.id}`}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => goToEntity(entity)}
+                      className={`w-full flex items-center gap-3 rounded-xl px-3 py-2 text-left transition ${
+                        isActive ? "bg-white/12" : "hover:bg-white/8"
+                      }`}
+                    >
+                      <div className="h-14 w-10 rounded-lg bg-black/40 border border-white/10 overflow-hidden shrink-0 relative">
+                        {image ? (
+                          <Image src={image} alt="" fill sizes="40px" className="object-cover" />
+                        ) : (
+                          <div className="h-full w-full" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-bold text-white">{entity.title}</div>
+                        <div className="mt-1 flex items-center gap-2 text-[11px] text-zinc-500">
+                          {meta ? <span className="truncate">{meta}</span> : null}
+                          {(entity.type === "movie" || entity.type === "tv") && (
+                            <span className="inline-flex items-center gap-1 text-amber-300">
+                              <Star className="w-3 h-3 fill-current" />
+                              {entity.rating || "--"}
+                            </span>
                           )}
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-bold text-white">{entity.title}</div>
-                          <div className="mt-1 flex items-center gap-2 text-[11px] text-zinc-500">
-                            {meta ? <span className="truncate">{meta}</span> : null}
-                            {(entity.type === "movie" || entity.type === "tv") && (
-                              <span className="inline-flex items-center gap-1 text-amber-300">
-                                <Star className="w-3 h-3 fill-current" />
-                                {entity.rating || "--"}
-                              </span>
-                            )}
-                          </div>
-                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+
+                {pageCount > 1 ? (
+                  <div className="flex items-center justify-between gap-3 px-3 py-2 border-t border-white/5 text-[11px] text-zinc-500">
+                    <span>
+                      Page {activePage + 1} of {pageCount}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => {
+                          setActivePage((current) => Math.max(0, current - 1));
+                          setActiveIndex(-1);
+                        }}
+                        disabled={activePage === 0}
+                        className="rounded-lg border border-white/10 px-2.5 py-1 text-zinc-300 disabled:opacity-40 disabled:hover:bg-transparent hover:bg-white/5 transition"
+                      >
+                        Prev
                       </button>
-                    );
-                  })}
-                </div>
-              ) : null}
+                      <button
+                        type="button"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => {
+                          setActivePage((current) => Math.min(pageCount - 1, current + 1));
+                          setActiveIndex(-1);
+                        }}
+                        disabled={activePage >= pageCount - 1}
+                        className="rounded-lg border border-white/10 px-2.5 py-1 text-zinc-300 disabled:opacity-40 disabled:hover:bg-transparent hover:bg-white/5 transition"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             </div>
           ) : (
             <div className="px-4 py-4 text-sm text-zinc-500">No quick matches yet.</div>

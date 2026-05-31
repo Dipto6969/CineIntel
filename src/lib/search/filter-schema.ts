@@ -30,6 +30,7 @@ export type FilterState = {
   franchise: string[];
   awardsOnly: boolean;
   personalRatingMin?: number;
+  personalRatingMax?: number;
   favoritesOnly: boolean;
   inventorySort: InventorySortMode;
 };
@@ -98,6 +99,7 @@ export function parseFiltersFromParams(params: URLSearchParams): FilterState {
     franchise: parseList(params.get("franchise")),
     awardsOnly: params.get("awardsOnly") === "true",
     personalRatingMin: parseNumber(params.get("personalRatingMin")),
+    personalRatingMax: parseNumber(params.get("personalRatingMax")),
     favoritesOnly: params.get("favoritesOnly") === "true",
     inventorySort: (params.get("inventorySort") as InventorySortMode) || "recently_added",
   };
@@ -167,6 +169,7 @@ export function serializeFiltersToParams(filters: FilterState): URLSearchParams 
   if (franchise) params.set("franchise", franchise);
   if (filters.awardsOnly) params.set("awardsOnly", "true");
   if (filters.personalRatingMin) params.set("personalRatingMin", String(filters.personalRatingMin));
+  if (filters.personalRatingMax) params.set("personalRatingMax", String(filters.personalRatingMax));
   if (filters.favoritesOnly) params.set("favoritesOnly", "true");
   if (filters.inventorySort !== "recently_added") params.set("inventorySort", filters.inventorySort);
   return params;
