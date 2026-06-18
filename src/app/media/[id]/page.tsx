@@ -587,6 +587,7 @@ export default async function MediaDetailPage({
                             alt={itemTitle}
                             fill
                             sizes="(max-width: 768px) 30vw, 160px"
+                            unoptimized
                             className="object-cover opacity-90 group-hover:opacity-100 transition"
                           />
                         ) : (

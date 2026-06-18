@@ -56,6 +56,7 @@ export function CastSection({ cast }: CastSectionProps) {
                       alt={member.name}
                       fill
                       sizes="(max-width: 768px) 40vw, 160px"
+                      unoptimized
                       className="object-cover opacity-90 group-hover:opacity-100 transition"
                     />
                   ) : (

@@ -129,6 +129,9 @@ export default function InventoryPage() {
   const [tagFilterDraft, setTagFilterDraft] = useState("");
   const [userTags, setUserTags] = useState<TagValue[]>([]);
 
+  const confirmDeleteInventory = () =>
+    window.confirm("Remove this title from your inventory? This cannot be undone.");
+
   const watchedItems = useMemo(
     () => inventory.filter((item) => item.status === "completed"),
     [inventory]
@@ -765,6 +768,7 @@ export default function InventoryPage() {
                         <button
                           onClick={(event) => {
                             event.preventDefault();
+                            if (!confirmDeleteInventory()) return;
                             handleDeleteInventory(item.id);
                           }}
                           className="shrink-0 opacity-0 group-hover/card:opacity-100 text-rose-400 hover:text-rose-300 transition-opacity p-1 rounded-md hover:bg-rose-500/10 z-20"

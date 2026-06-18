@@ -60,6 +60,9 @@ export default function WatchlistPage() {
     [inventory]
   );
 
+  const confirmDeleteWatchlist = () =>
+    window.confirm("Remove this title from your watchlist? This cannot be undone.");
+
   const refreshInventory = async () => {
     setNotice(null);
     setIsLoadingInventory(true);
@@ -198,7 +201,11 @@ export default function WatchlistPage() {
                       {item.media_item?.title || "Untitled"}
                     </h3>
                     <button
-                      onClick={(e) => { e.preventDefault(); handleDeleteInventory(item.id); }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (!confirmDeleteWatchlist()) return;
+                        handleDeleteInventory(item.id);
+                      }}
                       className="opacity-0 group-hover/card:opacity-100 text-rose-400 hover:text-rose-300 transition-opacity p-1 rounded-md hover:bg-rose-500/10 z-20"
                       title="Remove from Watchlist"
                     >
