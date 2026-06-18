@@ -53,7 +53,7 @@ type TagValue = {
   name: string;
 };
 
-function posterUrl(path: string | null, size: "w185" | "w342" | "w500" = "w342") {
+function posterUrl(path: string | null, size: "w342" = "w342") {
   if (!path) return null;
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }

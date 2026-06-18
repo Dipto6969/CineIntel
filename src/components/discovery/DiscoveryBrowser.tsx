@@ -26,12 +26,12 @@ const CONTENT_TYPE_OPTIONS: Array<{ value: "all" | ContentType; label: string }>
   { value: "mini-series", label: "Mini-series" },
 ];
 
-function posterUrl(path: string | null, size: "w185" | "w342" = "w342") {
+function posterUrl(path: string | null, size: "w342" = "w342") {
   if (!path) return null;
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }
 
-function profileUrl(path: string | null, size: "w185" | "w342" = "w185") {
+function profileUrl(path: string | null, size: "w185" = "w185") {
   if (!path) return null;
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }
@@ -360,7 +360,7 @@ function DiscoveryResults({
                     <Link key={mediaItemId(entity)} href={`/media/${entity.id}?type=${entity.type}`} className="group/card relative flex flex-col gap-3">
                       <div className="aspect-2/3 w-full rounded-2xl overflow-hidden bg-[#11131a] border border-white/5 relative transition-all duration-300 group-hover/card:scale-105 group-hover/card:shadow-[0_8px_30px_rgba(0,0,0,0.5)] group-hover/card:z-10 group-hover/card:border-white/20">
                         {image ? (
-                          <Image src={image} alt={entity.title} fill sizes="(max-width: 1024px) 40vw, 200px" className="object-cover transition-transform duration-500 group-hover/card:scale-110 opacity-90 group-hover/card:opacity-100" />
+                          <Image src={image} alt={entity.title} fill sizes="(max-width: 1024px) 40vw, 200px" unoptimized className="object-cover transition-transform duration-500 group-hover/card:scale-110 opacity-90 group-hover/card:opacity-100" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-xs text-zinc-700 font-semibold">NO ART</div>
                         )}

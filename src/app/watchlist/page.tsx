@@ -44,7 +44,7 @@ const STATUS_STYLES: Record<WatchStatus, string> = {
   dropped: "text-[oklch(0.65_0.18_25)] border-[oklch(0.65_0.18_25)]/30",
 };
 
-function posterUrl(path: string | null, size: "w185" | "w342" | "w500" = "w342") {
+function posterUrl(path: string | null, size: "w342" = "w342") {
   if (!path) return null;
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }

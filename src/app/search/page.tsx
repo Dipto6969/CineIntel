@@ -76,12 +76,12 @@ const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
   "mini-series": "Mini-series",
 };
 
-function posterUrl(path: string | null, size: "w185" | "w342" = "w342") {
+function posterUrl(path: string | null, size: "w342" = "w342") {
   if (!path) return null;
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }
 
-function profileUrl(path: string | null, size: "w185" | "w342" = "w185") {
+function profileUrl(path: string | null, size: "w185" = "w185") {
   if (!path) return null;
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }
@@ -766,6 +766,7 @@ function SearchContent() {
                                 alt={entity.title}
                                 fill
                                 sizes="(max-width: 1024px) 40vw, 200px"
+                                unoptimized
                                 className="object-cover transition-transform duration-500 group-hover/card:scale-110 opacity-90 group-hover/card:opacity-100"
                               />
                             ) : (
@@ -843,7 +844,7 @@ function SearchContent() {
                       >
                         <div className="h-20 w-16 rounded-xl overflow-hidden bg-black/40 border border-white/10 relative">
                           {image ? (
-                            <Image src={image} alt={entity.title} fill sizes="80px" className="object-cover" />
+                            <Image src={image} alt={entity.title} fill sizes="80px" unoptimized className="object-cover" />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center text-zinc-600">
                               <Users className="w-5 h-5" />

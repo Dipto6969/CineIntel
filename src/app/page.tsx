@@ -33,7 +33,7 @@ type InventoryRecord = {
   status: "completed" | "dropped" | "on_hold" | "plan_to_watch";
 };
 
-function posterUrl(path: string | null, size: "w342" | "w500" = "w342") {
+function posterUrl(path: string | null, size: "w342" = "w342") {
   if (!path) return null;
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }
@@ -123,6 +123,7 @@ function DiscoveryShelf({
                         alt={getTitle(item)}
                         fill
                         sizes="(max-width: 768px) 35vw, 200px"
+                        unoptimized
                         className="object-cover transition-transform duration-500 group-hover/card:scale-110 opacity-90 group-hover/card:opacity-100"
                       />
                     ) : (

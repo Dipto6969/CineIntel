@@ -198,8 +198,8 @@ export default async function MediaDetailPage({
   const mediaItemId = `${tmdbId}_${mediaType}`;
   const inventorySnapshot = await loadUserInventory(mediaItemId);
 
-  const backdrop = backdropUrl(detail.backdrop_path, "original");
-  const poster = posterUrl(detail.poster_path, "w500");
+  const backdrop = backdropUrl(detail.backdrop_path, "w1280");
+  const poster = posterUrl(detail.poster_path, "w342");
   const titleYear = formatYear(releaseDate);
   const imdbScoreValue = omdb?.imdbRating ? Number(omdb.imdbRating) : null;
   const imdbScoreClass =
@@ -248,6 +248,7 @@ export default async function MediaDetailPage({
                     alt={`${title} poster`}
                     fill
                     sizes="(max-width: 1024px) 60vw, 300px"
+                    unoptimized
                     className="object-cover"
                   />
                 ) : (

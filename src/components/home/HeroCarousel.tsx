@@ -26,12 +26,12 @@ function getYear(item: TMDbSearchResult) {
   return date ? date.slice(0, 4) : "";
 }
 
-function posterUrl(path: string | null, size: "w500" | "w780" = "w500") {
+function posterUrl(path: string | null, size: "w500" = "w500") {
   if (!path) return null;
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }
 
-function backdropUrl(path: string | null, size: "w1280" | "original" = "w1280") {
+function backdropUrl(path: string | null, size: "w1280" = "w1280") {
   if (!path) return null;
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }

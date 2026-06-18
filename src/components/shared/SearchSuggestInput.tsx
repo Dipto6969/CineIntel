@@ -324,7 +324,7 @@ export function SearchSuggestInput({
                     >
                       <div className="h-14 w-10 rounded-lg bg-black/40 border border-white/10 overflow-hidden shrink-0 relative">
                         {image ? (
-                          <Image src={image} alt="" fill sizes="40px" className="object-cover" />
+                          <Image src={image} alt="" fill sizes="40px" unoptimized className="object-cover" />
                         ) : (
                           <div className="h-full w-full" />
                         )}
