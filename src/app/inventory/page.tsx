@@ -69,6 +69,13 @@ function formatRating(value: number | null) {
   return value.toFixed(1);
 }
 
+function parseCommaSeparatedValues(value: string) {
+  return value
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
 function matchesInventoryClause(
   clause: Parameters<typeof evaluateAdvancedClauses>[1] extends (clause: infer C) => boolean ? C : never,
   item: InventoryItem,
@@ -126,6 +133,8 @@ export default function InventoryPage() {
   const [viewMode, setViewMode] = useState<InventoryViewMode>("recent");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageJumpDraft, setPageJumpDraft] = useState("1");
+  const [genreFilterDraft, setGenreFilterDraft] = useState("");
+  const [countryFilterDraft, setCountryFilterDraft] = useState("");
   const [tagFilterDraft, setTagFilterDraft] = useState("");
   const [userTags, setUserTags] = useState<TagValue[]>([]);
 
@@ -547,11 +556,15 @@ export default function InventoryPage() {
               <div>
                 <div className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-2">Genres</div>
                 <input
-                  value={filters.genres.join(", ")}
-                  onChange={(event) => setFilters((prev) => ({
-                    ...prev,
-                    genres: event.target.value.split(",").map((value) => value.trim()).filter(Boolean),
-                  }))}
+                  value={genreFilterDraft}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setGenreFilterDraft(value);
+                    setFilters((prev) => ({
+                      ...prev,
+                      genres: parseCommaSeparatedValues(value),
+                    }));
+                  }}
                   className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-zinc-200"
                   placeholder="Thriller, Mystery"
                 />
@@ -610,11 +623,15 @@ export default function InventoryPage() {
               <div>
                 <div className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-2">Country</div>
                 <input
-                  value={filters.countries.join(", ")}
-                  onChange={(event) => setFilters((prev) => ({
-                    ...prev,
-                    countries: event.target.value.split(",").map((value) => value.trim()).filter(Boolean),
-                  }))}
+                  value={countryFilterDraft}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setCountryFilterDraft(value);
+                    setFilters((prev) => ({
+                      ...prev,
+                      countries: parseCommaSeparatedValues(value),
+                    }));
+                  }}
                   className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-zinc-200"
                   placeholder="South Korea"
                 />
