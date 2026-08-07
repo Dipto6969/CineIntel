@@ -89,7 +89,7 @@ function DiscoveryShelf({
 
   return (
     <section className="space-y-4 pt-10">
-      <div className="flex items-end justify-between px-6 md:px-12 w-full max-w-400 mx-auto">
+      <div className="flex flex-col items-start justify-between gap-3 px-4 sm:px-6 md:px-12 w-full max-w-400 mx-auto sm:flex-row sm:items-end">
         <div className="space-y-1">
           <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">{title}</h2>
           <p className="text-sm text-zinc-500 max-w-2xl leading-relaxed">{description}</p>
@@ -98,7 +98,7 @@ function DiscoveryShelf({
           Explore all <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
         </Link>
       </div>
-      <div className="w-full relative px-6 md:px-12 max-w-400 mx-auto group">
+      <div className="w-full relative px-4 sm:px-6 md:px-12 max-w-400 mx-auto group">
         <Swiper
           modules={[Navigation, FreeMode, Mousewheel]}
           navigation
@@ -262,7 +262,7 @@ export default function Home() {
       <Navbar transparentOnTop={true} />
 
       {/* Hero Section */}
-      <section className="relative w-full mb-10 overflow-hidden px-6 md:px-12 max-w-400 mx-auto">
+      <section className="relative w-full mb-10 overflow-hidden px-3 sm:px-6 md:px-12 max-w-400 mx-auto">
         <HeroCarousel
           items={heroItems}
           sourceLabel="Trending"
@@ -285,14 +285,14 @@ export default function Home() {
         ))}
 
         {/* Global Filter / Command Center CTA */}
-        <section className="px-6 md:px-12 max-w-400 mx-auto mt-32 text-center">
-          <div className="p-8 md:p-20 rounded-[3rem] bg-linear-to-tr from-[oklch(0.70_0.16_195)]/20 via-[#0a0c10] to-[#050608] border border-[oklch(0.70_0.16_195)]/20 relative overflow-hidden group shadow-2xl">
+        <section className="px-4 sm:px-6 md:px-12 max-w-400 mx-auto mt-24 sm:mt-32 text-center">
+          <div className="p-6 sm:p-8 md:p-20 rounded-3xl md:rounded-[3rem] bg-linear-to-tr from-[oklch(0.70_0.16_195)]/20 via-[#0a0c10] to-[#050608] border border-[oklch(0.70_0.16_195)]/20 relative overflow-hidden group shadow-2xl">
             <div className="absolute top-0 right-0 w-160 h-160 bg-[oklch(0.70_0.16_195)]/10 rounded-full blur-[120px] pointer-events-none transition-opacity duration-700 group-hover:opacity-80" />
             <div className="absolute bottom-0 left-0 w-120 h-120 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none" />
             
             <div className="relative z-10">
               <Sparkles className="w-12 h-12 text-[oklch(0.70_0.16_195)] mx-auto mb-8 opacity-90 drop-shadow-lg" />
-              <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight drop-shadow-xl">
+              <h2 className="text-3xl sm:text-4xl md:text-6xl font-black text-white mb-6 tracking-tight drop-shadow-xl">
                 Looking for something specific?
               </h2>
               <p className="text-zinc-400 max-w-2xl mx-auto mb-10 text-lg md:text-xl leading-relaxed">
@@ -300,7 +300,7 @@ export default function Home() {
               </p>
               <Link
                 href="/search"
-                className="inline-flex items-center gap-3 px-10 py-5 rounded-full bg-[oklch(0.70_0.16_195)] text-black text-lg font-extrabold hover:bg-[oklch(0.75_0.15_140)] transition-all shadow-[0_0_40px_rgba(0,180,216,0.3)] hover:shadow-[0_0_60px_rgba(0,180,216,0.5)] active:scale-95"
+                className="inline-flex max-w-full items-center justify-center gap-3 px-6 py-4 sm:px-10 sm:py-5 rounded-full bg-[oklch(0.70_0.16_195)] text-black text-sm sm:text-lg font-extrabold hover:bg-[oklch(0.75_0.15_140)] transition-all shadow-[0_0_40px_rgba(0,180,216,0.3)] hover:shadow-[0_0_60px_rgba(0,180,216,0.5)] active:scale-95"
               >
                 Launch Query Terminal
               </Link>
@@ -310,7 +310,7 @@ export default function Home() {
       </main>
 
       {/* Elegant Footer */}
-      <footer className="border-t border-white/5 pt-12 pb-20 px-6 md:px-12 w-full max-w-400 mx-auto bg-[#050608] relative z-20">
+      <footer className="border-t border-white/5 pt-12 pb-20 px-4 sm:px-6 md:px-12 w-full max-w-400 mx-auto bg-[#050608] relative z-20">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
             <Film className="w-5 h-5 text-zinc-300" />

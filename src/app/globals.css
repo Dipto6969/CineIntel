@@ -121,11 +121,35 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+  }
   body {
     @apply bg-background text-foreground;
   }
   html {
     @apply font-sans;
+  }
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+  }
+  input,
+  select,
+  textarea,
+  button {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 1023px) {
+  body {
+    padding-bottom: calc(4.75rem + env(safe-area-inset-bottom));
   }
 }
 

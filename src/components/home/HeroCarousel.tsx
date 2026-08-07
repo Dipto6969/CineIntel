@@ -147,7 +147,7 @@ export function HeroCarousel({
 
   return (
     <section
-      className="group/hero relative isolate overflow-hidden rounded-[2.25rem] border border-white/10 bg-[#050608] shadow-[0_40px_120px_rgba(0,0,0,0.55)]"
+      className="group/hero relative isolate overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#050608] shadow-[0_40px_120px_rgba(0,0,0,0.55)] sm:rounded-[2.25rem]"
       aria-label="Hero carousel"
     >
       <div className="absolute inset-0 bg-[#050608]" />
@@ -176,8 +176,8 @@ export function HeroCarousel({
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(10,14,18,0.12),transparent_35%),linear-gradient(90deg,rgba(5,6,8,0.95)_0%,rgba(5,6,8,0.82)_42%,rgba(5,6,8,0.4)_72%,rgba(5,6,8,0.2)_100%)]" />
       <div className="absolute inset-0 bg-gradient-to-t from-[#050608] via-transparent to-[#050608]/20" />
 
-      <div className="relative z-10 mx-auto flex min-h-[720px] max-w-[1600px] flex-col justify-between gap-8 px-6 py-8 md:px-12 md:py-10 lg:min-h-[820px]">
-        <div className="flex items-center justify-between gap-4 pt-16 md:pt-20 lg:pt-24">
+      <div className="relative z-10 mx-auto flex min-h-[660px] max-w-[1600px] flex-col justify-between gap-8 px-4 py-6 sm:px-6 sm:py-8 md:px-12 md:py-10 lg:min-h-[820px]">
+        <div className="flex items-center justify-between gap-4 pt-14 md:pt-20 lg:pt-24">
           <div className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.70_0.16_195)]/25 bg-black/35 px-3 py-1 backdrop-blur-md">
             <Sparkles className="h-3 w-3 text-[oklch(0.70_0.16_195)]" />
             <span className="text-[10px] font-black uppercase tracking-[0.28em] text-zinc-100">
@@ -202,7 +202,7 @@ export function HeroCarousel({
               ))}
             </div>
 
-            <h1 className="text-5xl font-black leading-[0.96] tracking-tighter text-white drop-shadow-2xl md:text-7xl lg:text-8xl">
+            <h1 className="text-4xl font-black leading-[0.98] tracking-tight text-white drop-shadow-2xl sm:text-5xl md:text-7xl lg:text-8xl">
               {title}
             </h1>
 
@@ -221,14 +221,14 @@ export function HeroCarousel({
               )}
             </div>
 
-            <p className="max-w-2xl text-base leading-7 text-zinc-200/90 md:text-lg md:leading-8">
+            <p className="max-w-2xl text-sm leading-6 text-zinc-200/90 sm:text-base sm:leading-7 md:text-lg md:leading-8">
               {currentSlide.overview || "Overview unavailable for this title."}
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Link
                 href={`/media/${currentSlide.id}?type=${currentSlide.media_type}`}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-extrabold text-black shadow-xl transition hover:bg-zinc-200 active:scale-95"
+                className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-xs font-extrabold text-black shadow-xl transition hover:bg-zinc-200 active:scale-95 sm:px-5 sm:py-3 sm:text-sm"
               >
                 <PlayCircle className="h-4 w-4" />
                 View Details
@@ -238,7 +238,7 @@ export function HeroCarousel({
                   type="button"
                   onClick={() => handleWatchlistClick(currentSlide)}
                   disabled={isWatchlisted || isBusy}
-                  className={`inline-flex items-center gap-2 rounded-full border px-5 py-3 text-sm font-extrabold transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 ${
+                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-xs font-extrabold transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5 sm:py-3 sm:text-sm ${
                     isWatchlisted
                       ? "border-[oklch(0.78_0.14_75)]/35 bg-[oklch(0.78_0.14_75)]/10 text-[oklch(0.84_0.13_75)]"
                       : "border-white/10 bg-white/5 text-white hover:border-[oklch(0.78_0.14_75)]/35 hover:bg-[oklch(0.78_0.14_75)]/10 hover:text-[oklch(0.84_0.13_75)]"
@@ -250,7 +250,7 @@ export function HeroCarousel({
               ) : (
                 <Link
                   href="/watchlist"
-                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-extrabold text-white transition hover:border-[oklch(0.78_0.14_75)]/35 hover:bg-[oklch(0.78_0.14_75)]/10 hover:text-[oklch(0.84_0.13_75)] active:scale-95"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-extrabold text-white transition hover:border-[oklch(0.78_0.14_75)]/35 hover:bg-[oklch(0.78_0.14_75)]/10 hover:text-[oklch(0.84_0.13_75)] active:scale-95 sm:px-5 sm:py-3 sm:text-sm"
                 >
                   <Bookmark className="h-4 w-4" />
                   Add to Watchlist

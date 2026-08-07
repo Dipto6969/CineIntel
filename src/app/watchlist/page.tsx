@@ -115,19 +115,19 @@ export default function WatchlistPage() {
     <div className="min-h-screen w-full bg-[#050608] text-zinc-100 flex flex-col font-sans selection:bg-[oklch(0.70_0.16_195)]/30 selection:text-white pb-10">
       <Navbar transparentOnTop={false} />
 
-      <main className="flex-1 max-w-[1600px] mx-auto w-full px-6 md:px-12 py-10 mt-24">
+      <main className="flex-1 max-w-[1600px] mx-auto w-full px-4 sm:px-6 md:px-12 py-8 sm:py-10 mt-24">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-[oklch(0.78_0.14_75)]/10 border border-[oklch(0.78_0.14_75)]/20 rounded-full text-xs text-[oklch(0.78_0.14_75)] font-semibold mb-4">
               <Bookmark className="w-3.5 h-3.5" />
               <span>Future Queue</span>
             </div>
-            <h1 className="text-4xl font-black text-white">Your Watchlist</h1>
+            <h1 className="text-3xl sm:text-4xl font-black text-white">Your Watchlist</h1>
             <p className="mt-2 text-sm text-zinc-500">
               Movies and series you want to watch later live here.
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Link
               href="/inventory"
               className="flex items-center gap-2 px-4 py-2 border border-[oklch(0.75_0.15_140)]/30 rounded-xl text-xs text-[oklch(0.75_0.15_140)] hover:bg-[oklch(0.75_0.15_140)]/10 transition"
@@ -152,7 +152,7 @@ export default function WatchlistPage() {
         )}
 
         {watchlistItems.length === 0 && !isLoadingInventory ? (
-          <div className="py-24 text-center border-2 border-dashed border-white/10 rounded-3xl">
+          <div className="px-4 py-20 sm:py-24 text-center border-2 border-dashed border-white/10 rounded-3xl">
             <Bookmark className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-white mb-2">No future titles yet</h3>
             <p className="text-zinc-500 text-sm max-w-md mx-auto mb-6">
@@ -164,7 +164,7 @@ export default function WatchlistPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
             {watchlistItems.map((item) => {
               const po = posterUrl(item.media_item?.poster_path || null, "w342");
               return (

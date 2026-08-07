@@ -255,10 +255,11 @@ export function SearchSuggestInput({
         <button
           type="submit"
           className={`shrink-0 rounded-full bg-[oklch(0.70_0.16_195)] text-black font-bold hover:bg-[oklch(0.75_0.15_195)] transition active:scale-95 ${
-            compact ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm"
+            compact ? "px-2.5 sm:px-3 py-1.5 text-xs" : "px-3 sm:px-4 py-2 text-sm"
           }`}
         >
-          Search
+          <span className="hidden sm:inline">Search</span>
+          <span className="sm:hidden">Go</span>
         </button>
       </form>
 

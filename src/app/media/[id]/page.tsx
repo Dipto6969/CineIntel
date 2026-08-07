@@ -228,8 +228,8 @@ export default async function MediaDetailPage({
         <div className="absolute inset-0 bg-linear-to-b from-[#050608]/40 via-[#050608]/80 to-[#050608]" />
       </div>
 
-      <main className="relative max-w-400 mx-auto px-6 md:px-12 py-12 mt-20">
-        <div className="flex items-center justify-between mb-8">
+      <main className="relative max-w-400 mx-auto px-4 sm:px-6 md:px-12 py-10 sm:py-12 mt-20">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
           <Link className="text-xs text-zinc-400 hover:text-white" href="/search">
             Back to search
           </Link>
@@ -238,7 +238,7 @@ export default async function MediaDetailPage({
           </span>
         </div>
 
-        <section className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-8 items-start">
+        <section className="grid grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
           <aside className="space-y-4 lg:sticky lg:top-24">
             <div className="glass-panel rounded-3xl overflow-hidden border border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
               <div className="aspect-2/3 bg-black/40 flex items-center justify-center relative">
@@ -294,8 +294,8 @@ export default async function MediaDetailPage({
             </div>
           </aside>
 
-          <div className="space-y-8">
-            <section className="glass-panel rounded-3xl p-6 md:p-8">
+          <div className="min-w-0 space-y-8">
+            <section className="glass-panel rounded-3xl p-4 sm:p-6 md:p-8">
               <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
                 {imdbLikeMeta.map((item) => (
                   <span key={item} className="px-2.5 py-1 rounded-full border border-white/10 bg-white/3">
@@ -306,7 +306,7 @@ export default async function MediaDetailPage({
 
               <div className="mt-5 flex flex-col xl:flex-row xl:items-start xl:justify-between gap-6">
                 <div className="max-w-4xl">
-                  <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-[1.02]">
+                  <h1 className="text-3xl sm:text-6xl font-black tracking-tight text-white leading-[1.02]">
                     {title}
                   </h1>
                   {detail.tagline && (
@@ -317,7 +317,7 @@ export default async function MediaDetailPage({
                   <p className="mt-2 text-sm text-zinc-500">Original title: {originalTitle}</p>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 min-w-0 xl:min-w-90">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0 xl:min-w-90">
                   <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
                     <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500">Released</div>
                     <div className="mt-2 text-sm font-bold text-white">{formatDate(releaseDate)}</div>
@@ -355,7 +355,7 @@ export default async function MediaDetailPage({
             </section>
 
             {(omdb?.awards || omdb?.metascore || omdb?.rated || omdb?.ratings.length) && (
-              <section className="glass-panel rounded-3xl p-6">
+              <section className="glass-panel rounded-3xl p-4 sm:p-6">
                 <h2 className="text-xs uppercase tracking-[0.3em] text-zinc-400 mb-5">
                   IMDb & Awards
                 </h2>
@@ -413,7 +413,7 @@ export default async function MediaDetailPage({
             )}
 
             <section className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6">
-              <div className="glass-panel rounded-3xl p-6">
+              <div className="glass-panel rounded-3xl p-4 sm:p-6">
                 <h2 className="text-xs uppercase tracking-[0.3em] text-zinc-400 mb-5">Credits</h2>
                 <div className="divide-y divide-white/10">
                   <div className="py-4 first:pt-0 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-2">
@@ -437,7 +437,7 @@ export default async function MediaDetailPage({
                 </div>
               </div>
 
-              <div className="glass-panel rounded-3xl p-6">
+              <div className="glass-panel rounded-3xl p-4 sm:p-6">
                 <h2 className="text-xs uppercase tracking-[0.3em] text-zinc-400 mb-5">Your Workspace</h2>
                 <div className="space-y-4 text-sm">
                   <div className="flex items-center justify-between gap-4">
@@ -472,7 +472,7 @@ export default async function MediaDetailPage({
             <CastSection cast={cast} />
 
             <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="glass-panel rounded-3xl p-6">
+              <div className="glass-panel rounded-3xl p-4 sm:p-6">
                 <h2 className="text-xs uppercase tracking-[0.3em] text-zinc-400 mb-5">Details</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
@@ -518,7 +518,7 @@ export default async function MediaDetailPage({
                 </div>
               </div>
 
-              <div className="glass-panel rounded-3xl p-6">
+              <div className="glass-panel rounded-3xl p-4 sm:p-6">
                 <h2 className="text-xs uppercase tracking-[0.3em] text-zinc-400 mb-5">Production</h2>
                 <div className="space-y-5">
                   <div>
@@ -571,7 +571,7 @@ export default async function MediaDetailPage({
               </div>
             </section>
 
-            <section className="glass-panel rounded-3xl p-6">
+            <section className="glass-panel rounded-3xl p-4 sm:p-6">
               <h2 className="text-xs uppercase tracking-[0.3em] text-zinc-400 mb-5">More Like This</h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-4">
                 {recommendations.map((item) => {

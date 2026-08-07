@@ -391,8 +391,8 @@ function SearchContent() {
     <div className="min-h-screen w-full bg-[#050608] text-zinc-100 flex flex-col font-sans selection:bg-[oklch(0.70_0.16_195)]/30 selection:text-white pb-10">
       <Navbar transparentOnTop={false} showSearch={false} initialSearchQuery={filters.query} />
 
-      <main className="flex-1 max-w-400 mx-auto w-full px-6 md:px-12 py-10 mt-24 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8">
-        <aside className="glass-panel rounded-3xl p-5 space-y-6 h-fit">
+      <main className="flex-1 max-w-400 mx-auto w-full px-4 sm:px-6 md:px-12 py-8 sm:py-10 mt-24 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6 lg:gap-8">
+        <aside className="glass-panel min-w-0 rounded-3xl p-4 sm:p-5 space-y-6 h-fit">
           <div className="flex items-center justify-between">
             <div className="text-xs uppercase tracking-[0.3em] text-zinc-500">Filters</div>
             <button
@@ -669,23 +669,23 @@ function SearchContent() {
           </button>
         </aside>
 
-        <section>
+        <section className="min-w-0">
           <div className="mb-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-[oklch(0.70_0.16_195)]/10 border border-[oklch(0.70_0.16_195)]/20 rounded-full text-xs text-[oklch(0.70_0.16_195)] font-semibold mb-4">
               <Search className="w-3.5 h-3.5" />
               <span>Universal Media Search</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white mb-4 leading-tight">
+            <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white mb-4 leading-tight">
               {filters.contentType ? CONTENT_TYPE_LABELS[filters.contentType] : "Explore everything TMDb knows"}
             </h1>
-            <p className="text-zinc-400 text-lg max-w-2xl leading-relaxed">
+            <p className="text-zinc-400 text-base sm:text-lg max-w-2xl leading-relaxed">
               {filters.contentType
                 ? `Showing only ${CONTENT_TYPE_LABELS[filters.contentType]} results for the selected filter set.`
                 : "Search movies, series, people, collections, and keywords from a single command center."}
             </p>
           </div>
 
-          <div className="glass-panel relative z-20 rounded-2xl p-5 mb-8">
+          <div className="glass-panel relative z-20 rounded-2xl p-4 sm:p-5 mb-8">
             <div className="flex flex-col gap-4">
               <SearchSuggestInput
                 key={filters.query}
@@ -745,7 +745,7 @@ function SearchContent() {
               </div>
 
               {(group.type === "movie" || group.type === "tv" || group.type === "collection") && (
-                <div className="relative z-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                <div className="relative z-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
                   {group.results.map((entity) => {
                     const image = getEntityImage(entity);
                     const isMovieOrTv = entity.type === "movie" || entity.type === "tv";
@@ -892,7 +892,7 @@ function SearchContent() {
             </section>
           ))}
 
-          <div className="mt-8 flex items-center justify-between gap-4">
+          <div className="mt-8 flex items-center justify-between gap-3 sm:gap-4">
             <button
               type="button"
               onClick={() => {

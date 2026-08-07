@@ -393,7 +393,7 @@ export default function InventoryPage() {
     <div className="min-h-screen w-full bg-[#050608] text-zinc-100 flex flex-col font-sans selection:bg-[oklch(0.70_0.16_195)]/30 selection:text-white pb-10">
       <Navbar transparentOnTop={false} showSearch={false} />
 
-      <main className="flex-1 max-w-400 mx-auto w-full px-6 md:px-12 py-10 mt-24">
+      <main className="flex-1 max-w-400 mx-auto w-full px-4 sm:px-6 md:px-12 py-8 sm:py-10 mt-24">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-[oklch(0.75_0.15_140)]/10 border border-[oklch(0.75_0.15_140)]/20 rounded-full text-xs text-[oklch(0.75_0.15_140)] font-semibold mb-4">
@@ -407,7 +407,7 @@ export default function InventoryPage() {
               Your watched movies and series, separated from the future queue.
             </p>
           </div>
-          <div className="grid grid-cols-3 gap-3 min-w-0 lg:min-w-105">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0 lg:min-w-105">
             <div className="glass-panel rounded-2xl p-4">
               <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500">Watched</div>
               <div className="mt-1 text-2xl font-black text-white">{stats.watched}</div>
@@ -429,7 +429,7 @@ export default function InventoryPage() {
           </div>
         )}
 
-        <section className="glass-panel rounded-3xl p-5 mb-10">
+        <section className="glass-panel rounded-3xl p-4 sm:p-5 mb-10">
           <div className="flex flex-col xl:flex-row xl:items-center gap-4">
             <div className="flex-1">
               <div className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-3">
@@ -730,7 +730,7 @@ export default function InventoryPage() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
                 {visibleWatchedItems.map((item) => {
                   const poster = posterUrl(item.media_item?.poster_path || null, "w342");
                   const title = item.media_item?.title || "Untitled";
@@ -805,7 +805,7 @@ export default function InventoryPage() {
                     <span>
                       Page {currentPage} of {totalPages} · {PAGE_SIZE} titles per page
                     </span>
-                    <label className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/25 px-3 py-2 text-xs text-zinc-400">
+                    <label className="flex min-w-0 items-center gap-2 rounded-xl border border-white/10 bg-black/25 px-3 py-2 text-xs text-zinc-400">
                       Go to page
                       <input
                         type="number"

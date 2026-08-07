@@ -164,8 +164,8 @@ function DiscoveryResults({
     <div className="min-h-screen w-full bg-[#050608] text-zinc-100 flex flex-col font-sans selection:bg-[oklch(0.70_0.16_195)]/30 selection:text-white pb-10">
       <Navbar transparentOnTop={false} showSearch={false} initialSearchQuery={filters.query} />
 
-      <main className="flex-1 max-w-400 mx-auto w-full px-6 md:px-12 py-10 mt-24 grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8">
-        <aside className="glass-panel rounded-3xl p-5 space-y-6 h-fit">
+      <main className="flex-1 max-w-400 mx-auto w-full px-4 sm:px-6 md:px-12 py-8 sm:py-10 mt-24 grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 lg:gap-8">
+        <aside className="glass-panel min-w-0 rounded-3xl p-4 sm:p-5 space-y-6 h-fit">
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-[11px] uppercase tracking-[0.3em] text-zinc-500">Discovery</div>
@@ -313,17 +313,17 @@ function DiscoveryResults({
           </button>
         </aside>
 
-        <section>
+        <section className="min-w-0">
           <div className="mb-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-[oklch(0.70_0.16_195)]/10 border border-[oklch(0.70_0.16_195)]/20 rounded-full text-xs text-[oklch(0.70_0.16_195)] font-semibold mb-4">
               <Search className="w-3.5 h-3.5" />
               <span>Discovery</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white mb-4 leading-tight">{title}</h1>
-            <p className="text-zinc-400 text-lg max-w-2xl leading-relaxed">{description}</p>
+            <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white mb-4 leading-tight">{title}</h1>
+            <p className="text-zinc-400 text-base sm:text-lg max-w-2xl leading-relaxed">{description}</p>
           </div>
 
-          <div className="glass-panel rounded-2xl p-5 mb-8">
+          <div className="glass-panel rounded-2xl p-4 sm:p-5 mb-8">
             <div className="flex flex-wrap items-center gap-3">
               <div className="inline-flex items-center gap-2 text-xs text-zinc-400">
                 <Filter className="w-3.5 h-3.5" />
@@ -353,7 +353,7 @@ function DiscoveryResults({
                 <h2 className="text-xs uppercase tracking-[0.3em] text-zinc-500">{group.label}</h2>
                 <span className="text-xs text-zinc-500">{group.total.toLocaleString()} total</span>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
                 {group.results.map((entity) => {
                   const image = getEntityImage(entity);
                   return (
