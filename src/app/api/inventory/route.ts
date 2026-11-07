@@ -43,9 +43,18 @@ async function requireUser() {
   } = await supabase.auth.getUser();
 
   if (error || !user) {
+    console.error("Inventory authentication failed", {
+      message: error?.message,
+      code: error?.code,
+      status: error?.status,
+    });
     return {
       error: NextResponse.json(
-        { error: "Your session has expired. Please sign in again." },
+        {
+          error: error?.message || "No authenticated user was found",
+          stage: "authentication",
+          code: error?.code,
+        },
         { status: 401 }
       ),
     };
@@ -77,7 +86,22 @@ export async function GET() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Inventory query failed", {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+    });
+    return NextResponse.json(
+      {
+        error: error.message,
+        stage: "inventory_query",
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      },
+      { status: 500 }
+    );
   }
 
   if (!inventory || inventory.length === 0) {
@@ -92,7 +116,22 @@ export async function GET() {
     .in("inventory_id", inventoryIds);
 
   if (tagError) {
-    return NextResponse.json({ error: tagError.message }, { status: 500 });
+    console.error("Inventory tag query failed", {
+      message: tagError.message,
+      code: tagError.code,
+      details: tagError.details,
+      hint: tagError.hint,
+    });
+    return NextResponse.json(
+      {
+        error: tagError.message,
+        stage: "tag_query",
+        code: tagError.code,
+        details: tagError.details,
+        hint: tagError.hint,
+      },
+      { status: 500 }
+    );
   }
 
   const tagsByInventory = new Map<string, { id: string; name: string }[]>();
