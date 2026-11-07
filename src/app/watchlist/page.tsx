@@ -67,11 +67,7 @@ export default function WatchlistPage() {
     setNotice(null);
     setIsLoadingInventory(true);
     try {
-      const response = await fetch("/api/inventory", {
-        headers: session?.access_token
-          ? { Authorization: `Bearer ${session.access_token}` }
-          : undefined,
-      });
+      const response = await fetch("/api/inventory");
       if (!response.ok) {
         let message = "Failed to load inventory";
         try {

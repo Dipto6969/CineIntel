@@ -35,21 +35,17 @@ function computeRewatchCount(watchDates: string[]): number {
   return watchDates.length > 1 ? watchDates.length - 1 : 0;
 }
 
-async function requireUser(request?: Request) {
+async function requireUser() {
   const supabase = await createClient();
-  const authorization = request?.headers.get("authorization");
-  const accessToken = authorization?.startsWith("Bearer ")
-    ? authorization.slice("Bearer ".length)
-    : undefined;
   const {
     data: { user },
     error,
-  } = await supabase.auth.getUser(accessToken);
+  } = await supabase.auth.getUser();
 
   if (error || !user) {
     return {
       error: NextResponse.json(
-        { error: error?.message || "Unauthorized" },
+        { error: "Your session has expired. Please sign in again." },
         { status: 401 }
       ),
     };
@@ -66,8 +62,8 @@ async function registerMedia(
   return ensureMediaCached(supabase, tmdbId, mediaType);
 }
 
-export async function GET(request: Request) {
-  const auth = await requireUser(request);
+export async function GET() {
+  const auth = await requireUser();
   if ("error" in auth) {
     return auth.error;
   }
@@ -117,7 +113,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireUser(request);
+  const auth = await requireUser();
   if ("error" in auth) {
     return auth.error;
   }
