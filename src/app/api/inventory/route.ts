@@ -21,7 +21,12 @@ type InventoryUpdateBody = Partial<Omit<InventoryCreateBody, "tmdbId" | "mediaTy
 
 type TagValue = { id: string; name: string };
 
-type TagLink = {
+type InventoryTagLink = {
+  inventory_id: string;
+  tag_id: string;
+};
+
+type TagRelationLink = {
   inventory_id: string;
   tag: TagValue | TagValue[] | null;
 };
@@ -81,7 +86,7 @@ export async function GET() {
 
   const { data: inventory, error } = await supabase
     .from("user_inventory")
-    .select("*, media_item:media_items(*)")
+    .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -109,11 +114,35 @@ export async function GET() {
   }
 
   const inventoryIds = inventory.map((item) => item.id);
+  const mediaItemIds = inventory.map((item) => item.media_item_id);
 
-  const { data: tagLinks, error: tagError } = await supabase
+  const [{ data: mediaItems, error: mediaError }, { data: tagLinks, error: tagError }] =
+    await Promise.all([
+      supabase.from("media_items").select("*").in("id", mediaItemIds),
+      supabase
     .from("inventory_tags")
-    .select("inventory_id, tag:tags(id, name)")
-    .in("inventory_id", inventoryIds);
+        .select("inventory_id, tag_id")
+        .in("inventory_id", inventoryIds),
+    ]);
+
+  if (mediaError) {
+    console.error("Inventory media query failed", {
+      message: mediaError.message,
+      code: mediaError.code,
+      details: mediaError.details,
+      hint: mediaError.hint,
+    });
+    return NextResponse.json(
+      {
+        error: mediaError.message,
+        stage: "media_query",
+        code: mediaError.code,
+        details: mediaError.details,
+        hint: mediaError.hint,
+      },
+      { status: 500 }
+    );
+  }
 
   if (tagError) {
     console.error("Inventory tag query failed", {
@@ -134,17 +163,39 @@ export async function GET() {
     );
   }
 
+  const tagIds =
+    (tagLinks as InventoryTagLink[] | null)?.map((link) => link.tag_id) || [];
+  const { data: tags, error: tagsError } = tagIds.length
+    ? await supabase.from("tags").select("id, name").in("id", tagIds)
+    : { data: [], error: null };
+
+  if (tagsError) {
+    return NextResponse.json(
+      {
+        error: tagsError.message,
+        stage: "tags_query",
+        code: tagsError.code,
+        details: tagsError.details,
+        hint: tagsError.hint,
+      },
+      { status: 500 }
+    );
+  }
+
+  const mediaById = new Map((mediaItems || []).map((item) => [item.id, item]));
+  const tagsById = new Map((tags || []).map((tag) => [tag.id, tag]));
   const tagsByInventory = new Map<string, { id: string; name: string }[]>();
-  (tagLinks as TagLink[] | null)?.forEach((link) => {
-    if (!link.tag) return;
+  (tagLinks as InventoryTagLink[] | null)?.forEach((link) => {
+    const tag = tagsById.get(link.tag_id);
+    if (!tag) return;
     const existing = tagsByInventory.get(link.inventory_id) || [];
-    const tags = Array.isArray(link.tag) ? link.tag : [link.tag];
-    existing.push(...tags);
+    existing.push(tag);
     tagsByInventory.set(link.inventory_id, existing);
   });
 
   const enriched = inventory.map((item) => ({
     ...item,
+    media_item: mediaById.get(item.media_item_id) || null,
     tags: tagsByInventory.get(item.id) || [],
   }));
 
@@ -248,7 +299,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: tagFetchError.message }, { status: 500 });
   }
 
-  const tags = (tagLinks as TagLink[] | null)
+  const tags = (tagLinks as TagRelationLink[] | null)
     ?.flatMap((link) => {
       if (!link.tag) return [];
       return Array.isArray(link.tag) ? link.tag : [link.tag];
