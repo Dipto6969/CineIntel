@@ -31,6 +31,16 @@ type TagRelationLink = {
   tag: TagValue | TagValue[] | null;
 };
 
+const QUERY_BATCH_SIZE = 100;
+
+function splitIntoBatches<T>(values: T[], batchSize: number): T[][] {
+  const batches: T[][] = [];
+  for (let index = 0; index < values.length; index += batchSize) {
+    batches.push(values.slice(index, index + batchSize));
+  }
+  return batches;
+}
+
 function sanitizeWatchDates(value?: string[]): string[] {
   if (!value) return [];
   return value.map((item) => item.trim()).filter((item) => item.length > 0);
@@ -116,14 +126,26 @@ export async function GET() {
   const inventoryIds = inventory.map((item) => item.id);
   const mediaItemIds = inventory.map((item) => item.media_item_id);
 
-  const [{ data: mediaItems, error: mediaError }, { data: tagLinks, error: tagError }] =
-    await Promise.all([
-      supabase.from("media_items").select("*").in("id", mediaItemIds),
-      supabase
-    .from("inventory_tags")
-        .select("inventory_id, tag_id")
-        .in("inventory_id", inventoryIds),
-    ]);
+  const [mediaResults, tagResults] = await Promise.all([
+    Promise.all(
+      splitIntoBatches(mediaItemIds, QUERY_BATCH_SIZE).map((batch) =>
+        supabase.from("media_items").select("*").in("id", batch)
+      )
+    ),
+    Promise.all(
+      splitIntoBatches(inventoryIds, QUERY_BATCH_SIZE).map((batch) =>
+        supabase
+          .from("inventory_tags")
+          .select("inventory_id, tag_id")
+          .in("inventory_id", batch)
+      )
+    ),
+  ]);
+
+  const mediaError = mediaResults.find((result) => result.error)?.error;
+  const tagError = tagResults.find((result) => result.error)?.error;
+  const mediaItems = mediaResults.flatMap((result) => result.data || []);
+  const tagLinks = tagResults.flatMap((result) => result.data || []);
 
   if (mediaError) {
     console.error("Inventory media query failed", {
