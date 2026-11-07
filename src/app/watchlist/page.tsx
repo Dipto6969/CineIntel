@@ -69,7 +69,16 @@ export default function WatchlistPage() {
     try {
       const response = await fetch("/api/inventory");
       if (!response.ok) {
-        throw new Error("Failed to load inventory");
+        let message = "Failed to load inventory";
+        try {
+          const errorData = (await response.json()) as { error?: string };
+          if (errorData.error) {
+            message = errorData.error;
+          }
+        } catch {
+          // Keep the generic message when the server does not return JSON.
+        }
+        throw new Error(message);
       }
       const data = (await response.json()) as InventoryItem[];
       setInventory(data);
