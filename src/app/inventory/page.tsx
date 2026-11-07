@@ -120,7 +120,7 @@ function matchesInventoryClause(
 }
 
 export default function InventoryPage() {
-  const { loading } = useAuth();
+  const { loading, session } = useAuth();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [isLoadingInventory, setIsLoadingInventory] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -337,7 +337,11 @@ export default function InventoryPage() {
     setNotice(null);
     setIsLoadingInventory(true);
     try {
-      const response = await fetch("/api/inventory");
+      const response = await fetch("/api/inventory", {
+        headers: session?.access_token
+          ? { Authorization: `Bearer ${session.access_token}` }
+          : undefined,
+      });
       if (!response.ok) {
         let message = "Failed to load inventory";
         try {
@@ -360,11 +364,13 @@ export default function InventoryPage() {
   };
 
   useEffect(() => {
+    if (loading || !session) return;
+
     const timer = window.setTimeout(() => {
       void refreshInventory();
     }, 0);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [loading, session]);
 
   useEffect(() => {
     setCurrentPage(1);

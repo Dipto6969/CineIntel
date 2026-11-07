@@ -35,15 +35,24 @@ function computeRewatchCount(watchDates: string[]): number {
   return watchDates.length > 1 ? watchDates.length - 1 : 0;
 }
 
-async function requireUser() {
+async function requireUser(request?: Request) {
   const supabase = await createClient();
+  const authorization = request?.headers.get("authorization");
+  const accessToken = authorization?.startsWith("Bearer ")
+    ? authorization.slice("Bearer ".length)
+    : undefined;
   const {
     data: { user },
     error,
-  } = await supabase.auth.getUser();
+  } = await supabase.auth.getUser(accessToken);
 
   if (error || !user) {
-    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+    return {
+      error: NextResponse.json(
+        { error: error?.message || "Unauthorized" },
+        { status: 401 }
+      ),
+    };
   }
 
   return { supabase, user };
@@ -57,8 +66,8 @@ async function registerMedia(
   return ensureMediaCached(supabase, tmdbId, mediaType);
 }
 
-export async function GET() {
-  const auth = await requireUser();
+export async function GET(request: Request) {
+  const auth = await requireUser(request);
   if ("error" in auth) {
     return auth.error;
   }
@@ -108,7 +117,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireUser();
+  const auth = await requireUser(request);
   if ("error" in auth) {
     return auth.error;
   }

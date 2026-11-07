@@ -50,7 +50,7 @@ function posterUrl(path: string | null, size: "w342" = "w342") {
 }
 
 export default function WatchlistPage() {
-  const { loading } = useAuth();
+  const { loading, session } = useAuth();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [isLoadingInventory, setIsLoadingInventory] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -67,7 +67,11 @@ export default function WatchlistPage() {
     setNotice(null);
     setIsLoadingInventory(true);
     try {
-      const response = await fetch("/api/inventory");
+      const response = await fetch("/api/inventory", {
+        headers: session?.access_token
+          ? { Authorization: `Bearer ${session.access_token}` }
+          : undefined,
+      });
       if (!response.ok) {
         let message = "Failed to load inventory";
         try {
@@ -91,11 +95,13 @@ export default function WatchlistPage() {
   };
 
   useEffect(() => {
+    if (loading || !session) return;
+
     const timer = window.setTimeout(() => {
       void refreshInventory();
     }, 0);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [loading, session]);
 
   const handleDeleteInventory = async (inventoryId: string) => {
     setNotice(null);
