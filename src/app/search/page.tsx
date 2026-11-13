@@ -124,6 +124,7 @@ function hasAdditionalSearchCriteria(filters: FilterState) {
       filters.genres.length ||
       filters.yearMin ||
       filters.yearMax ||
+      filters.yearExact ||
       filters.decade ||
       filters.language ||
       filters.countries.length ||
@@ -164,6 +165,7 @@ function buildActiveSearchChips(filters: FilterState) {
   filters.genres.forEach((genre) => chips.push({ key: `genre-${genre}`, label: `Genre: ${genre}` }));
   if (filters.yearMin) chips.push({ key: "yearMin", label: `Year min: ${filters.yearMin}` });
   if (filters.yearMax) chips.push({ key: "yearMax", label: `Year max: ${filters.yearMax}` });
+  if (filters.yearExact) chips.push({ key: "yearExact", label: `Year: ${filters.yearExact}` });
   if (filters.decade) chips.push({ key: "decade", label: `${filters.decade}s` });
   if (filters.language) chips.push({ key: "language", label: `Language: ${filters.language}` });
   filters.countries.forEach((country) => chips.push({ key: `country-${country}`, label: `Country: ${country}` }));
@@ -477,6 +479,18 @@ function SearchContent() {
               />
             </div>
             <div className="col-span-2">
+              <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-2">Exact Year</div>
+              <input
+                type="number"
+                min="1870"
+                max={new Date().getFullYear() + 10}
+                value={filters.yearExact || ""}
+                onChange={(event) => setFilters((prev) => ({ ...prev, yearExact: Number(event.target.value) || undefined }))}
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-zinc-200"
+                placeholder="2014"
+              />
+            </div>
+            <div className="col-span-2">
               <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-2">Decade</div>
               <select
                 value={filters.decade || ""}
@@ -595,21 +609,15 @@ function SearchContent() {
               />
               <input
                 value={filters.actor.join(", ")}
-                onChange={(event) => setFilters((prev) => ({
-                  ...prev,
-                  actor: event.target.value.split(",").map((value) => value.trim()).filter(Boolean),
-                }))}
+                onChange={(event) => setFilters((prev) => ({ ...prev, actor: event.target.value.trim() ? [event.target.value.trim()] : [] }))}
                 className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-zinc-200"
-                placeholder="actor:jake"
+                placeholder="Actor name (e.g. Jake Gyllenhaal)"
               />
               <input
                 value={filters.studio.join(", ")}
-                onChange={(event) => setFilters((prev) => ({
-                  ...prev,
-                  studio: event.target.value.split(",").map((value) => value.trim()).filter(Boolean),
-                }))}
+                onChange={(event) => setFilters((prev) => ({ ...prev, studio: event.target.value.trim() ? [event.target.value.trim()] : [] }))}
                 className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-zinc-200"
-                placeholder="studio:A24"
+                placeholder="Studio name (e.g. Warner Bros.)"
               />
               <input
                 value={filters.keywords.join(", ")}

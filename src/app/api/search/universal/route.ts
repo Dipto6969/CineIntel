@@ -139,6 +139,23 @@ function normalizeList(values: string[]) {
   return values.map((value) => value.trim().toLowerCase()).filter(Boolean);
 }
 
+const COUNTRY_ALIASES: Record<string, string[]> = {
+  france: ["france"], french: ["france"],
+  "united states": ["united states", "united states of america", "usa"], usa: ["united states", "united states of america", "usa"],
+  "united kingdom": ["united kingdom", "uk", "great britain"], uk: ["united kingdom", "uk", "great britain"], british: ["united kingdom"],
+  "south korea": ["south korea", "republic of korea"], korean: ["south korea", "republic of korea"],
+  "czech republic": ["czech republic", "czechia"], czechia: ["czech republic", "czechia"],
+  "hong kong": ["hong kong"], japanese: ["japan"], japan: ["japan"], indian: ["india"], india: ["india"],
+};
+
+function countryMatches(countryName: string, countryCode: string | undefined, requested: string) {
+  const needle = requested.trim().toLowerCase();
+  const name = countryName.trim().toLowerCase();
+  const candidates = COUNTRY_ALIASES[needle] || [needle];
+  if (countryCode?.toLowerCase() === needle) return true;
+  return candidates.some((candidate) => name === candidate || name.includes(candidate));
+}
+
 function matchesReleaseStatus(
   mediaType: "movie" | "tv",
   releaseDate: string | undefined,
@@ -291,7 +308,9 @@ async function applyDetailFilters(
     filters.tvSubtype === "any" &&
     filters.runtimeMin === undefined &&
     filters.runtimeMax === undefined &&
-    filters.franchise.length === 0
+    filters.franchise.length === 0 &&
+    clauses.length === 0 &&
+    !plainQuery
   ) {
     return results;
   }
@@ -333,12 +352,10 @@ async function applyDetailFilters(
       }
 
       if (countrySet.size > 0) {
-        const productionCountries = (detail.production_countries || []) as Array<{ name?: string }>;
-        const countries: string[] = [];
-        for (const country of productionCountries) {
-          countries.push(String(country.name || "").toLowerCase());
-        }
-        const hasMatch = countries.some((country) => countrySet.has(country));
+        const productionCountries = (detail.production_countries || []) as Array<{ name?: string; iso_3166_1?: string }>;
+        const hasMatch = productionCountries.some((country) =>
+          Array.from(countrySet).some((requested) => countryMatches(String(country.name || ""), country.iso_3166_1, requested))
+        );
         if (!hasMatch) return false;
       }
 
@@ -421,7 +438,7 @@ export async function GET(request: Request) {
   try {
     const hasFilterCriteria =
       filters.genres.length > 0 ||
-      Boolean(filters.yearMin || filters.yearMax || filters.decade) ||
+      Boolean(filters.yearMin || filters.yearMax || filters.yearExact || filters.decade) ||
       Boolean(filters.runtimeMin || filters.runtimeMax) ||
       Boolean(filters.language) ||
       filters.countries.length > 0 ||
@@ -473,9 +490,9 @@ export async function GET(request: Request) {
       discoverMovieParams.with_original_language = languageCode;
       discoverTvParams.with_original_language = languageCode;
     }
-    if (filters.yearMin || filters.yearMax || filters.decade) {
-      const minYear = filters.decade || filters.yearMin;
-      const maxYear = filters.decade ? filters.decade + 9 : filters.yearMax;
+    if (filters.yearMin || filters.yearMax || filters.yearExact || filters.decade) {
+      const minYear = filters.yearExact || filters.decade || filters.yearMin;
+      const maxYear = filters.yearExact || (filters.decade ? filters.decade + 9 : filters.yearMax);
       if (minYear) {
         discoverMovieParams.primary_release_date_gte = `${minYear}-01-01`;
         discoverTvParams.first_air_date_gte = `${minYear}-01-01`;
@@ -537,20 +554,41 @@ export async function GET(request: Request) {
 
     const emptyList: MediaSearchResponse = { page, total_pages: 0, total_results: 0, results: [] };
 
-    const [movies, tv] = await Promise.all([
-      types.includes("movie")
-      ? (useDiscoverForMedia
-        ? discoverMovies({ ...discoverMovieParams, page: String(page) })
-        : searchMovies(query || " ", page))
-        .catch(() => emptyList)
-      : Promise.resolve(emptyList),
-      types.includes("tv")
-      ? (useDiscoverForMedia
-        ? discoverTV({ ...discoverTvParams, page: String(page) })
-        : searchTV(query || " ", page))
-        .catch(() => emptyList)
-      : Promise.resolve(emptyList),
-    ]) as [MediaSearchResponse, MediaSearchResponse];
+    const detailedFiltering = filters.countries.length > 0 || filters.releaseStatus !== "any" ||
+      filters.tvSubtype !== "any" || filters.runtimeMin !== undefined || filters.runtimeMax !== undefined ||
+      filters.franchise.length > 0 || clauses.length > 0 || Boolean(textQuery);
+    const scanLimit = detailedFiltering ? Math.max(5, Math.ceil((limit || PAGE_SIZE) / 20)) : 1;
+    const fetchPages = async (type: "movie" | "tv"): Promise<MediaSearchResponse> => {
+      if (!types.includes(type)) return emptyList;
+      const responses: MediaSearchResponse[] = [];
+      const firstPage = await (useDiscoverForMedia
+        ? type === "movie"
+          ? discoverMovies({ ...discoverMovieParams, page: String(page) })
+          : discoverTV({ ...discoverTvParams, page: String(page) })
+        : type === "movie"
+          ? searchMovies(query || " ", page)
+          : searchTV(query || " ", page)).catch(() => emptyList);
+      responses.push(firstPage);
+      const pagesToFetch = Math.min(scanLimit, Math.max(1, firstPage.total_pages - page + 1));
+      for (let offset = 1; offset < pagesToFetch; offset += 1) {
+        const nextPage = page + offset;
+        const response = await (useDiscoverForMedia
+          ? type === "movie"
+            ? discoverMovies({ ...discoverMovieParams, page: String(nextPage) })
+            : discoverTV({ ...discoverTvParams, page: String(nextPage) })
+          : type === "movie"
+            ? searchMovies(query || " ", nextPage)
+            : searchTV(query || " ", nextPage)).catch(() => emptyList);
+        responses.push(response);
+      }
+      return {
+        ...firstPage,
+        results: responses.flatMap((response) => response.results),
+        total_pages: firstPage.total_pages,
+      };
+    };
+
+    const [movies, tv] = await Promise.all([fetchPages("movie"), fetchPages("tv")]);
 
     const filterMovieGenreGroups = movieGenreGroups;
     const filterTvGenreGroups = tvGenreGroups;
@@ -565,7 +603,7 @@ export async function GET(request: Request) {
             const matches = matchesGenreGroups(item.genre_ids, filterMovieGenreGroups);
             if (!matches) return false;
           }
-          if (!matchesYear(item.release_date, filters.yearMin, filters.yearMax, filters.decade)) return false;
+          if (!matchesYear(item.release_date, filters.yearExact || filters.yearMin, filters.yearExact || filters.yearMax, filters.decade)) return false;
           if (languageCode && item.original_language !== languageCode) return false;
           if (filters.tmdbMin && item.vote_average < filters.tmdbMin) return false;
           if (filters.voteCountMin && (item.vote_count ?? 0) < filters.voteCountMin) return false;
@@ -586,7 +624,7 @@ export async function GET(request: Request) {
             const matches = matchesGenreGroups(item.genre_ids, filterTvGenreGroups);
             if (!matches) return false;
           }
-          if (!matchesYear(item.first_air_date, filters.yearMin, filters.yearMax, filters.decade)) return false;
+          if (!matchesYear(item.first_air_date, filters.yearExact || filters.yearMin, filters.yearExact || filters.yearMax, filters.decade)) return false;
           if (languageCode && item.original_language !== languageCode) return false;
           if (filters.tmdbMin && item.vote_average < filters.tmdbMin) return false;
           if (filters.voteCountMin && (item.vote_count ?? 0) < filters.voteCountMin) return false;
@@ -599,7 +637,7 @@ export async function GET(request: Request) {
       textQuery
     );
 
-    const movieEntities: SearchEntity[] = filteredMovieResults.map((item: any): SearchEntity => ({
+    const movieEntities: SearchEntity[] = filteredMovieResults.slice((page - 1) * (limit || PAGE_SIZE), page * (limit || PAGE_SIZE)).map((item: any): SearchEntity => ({
       id: item.id,
       type: "movie",
       title: item.title || "Untitled",
@@ -609,7 +647,7 @@ export async function GET(request: Request) {
       popularity: item.vote_average ?? null,
     }));
 
-    const tvEntities: SearchEntity[] = filteredTvResults.map((item: any): SearchEntity => ({
+    const tvEntities: SearchEntity[] = filteredTvResults.slice((page - 1) * (limit || PAGE_SIZE), page * (limit || PAGE_SIZE)).map((item: any): SearchEntity => ({
       id: item.id,
       type: "tv",
       title: item.name || "Untitled",

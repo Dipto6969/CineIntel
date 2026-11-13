@@ -12,6 +12,7 @@ export type FilterState = {
   genres: string[];
   yearMin?: number;
   yearMax?: number;
+  yearExact?: number;
   decade?: number;
   language?: string;
   countries: string[];
@@ -81,6 +82,7 @@ export function parseFiltersFromParams(params: URLSearchParams): FilterState {
     genres: parseList(params.get("genres")),
     yearMin: parseNumber(params.get("yearMin")),
     yearMax: parseNumber(params.get("yearMax")),
+    yearExact: parseNumber(params.get("yearExact")),
     decade: parseNumber(params.get("decade")),
     language: params.get("language") || undefined,
     countries: parseList(params.get("countries")),
@@ -145,6 +147,7 @@ export function serializeFiltersToParams(filters: FilterState): URLSearchParams 
   if (genres) params.set("genres", genres);
   if (filters.yearMin) params.set("yearMin", String(filters.yearMin));
   if (filters.yearMax) params.set("yearMax", String(filters.yearMax));
+  if (filters.yearExact) params.set("yearExact", String(filters.yearExact));
   if (filters.decade) params.set("decade", String(filters.decade));
   if (filters.language) params.set("language", filters.language);
   const countries = serializeList(filters.countries);
