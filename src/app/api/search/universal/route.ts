@@ -454,7 +454,11 @@ export async function GET(request: Request) {
       Boolean(filters.imdbMin || filters.tmdbMin);
 
     const hasAdvancedClauses = clauses.length > 0;
-    const useDiscoverForMedia = Boolean(filters.contentType) || hasFilterCriteria || filters.sort !== "relevance" || hasAdvancedClauses;
+    const useDiscoverForMedia =
+      Boolean(filters.contentType && !textQuery) ||
+      hasFilterCriteria ||
+      filters.sort !== "relevance" ||
+      hasAdvancedClauses;
     const canPushStructuredFilters = isSimpleAndExpression(clauses);
 
     const [directorIds, actorIds, companyIds, keywordIds, collectionIds] = await Promise.all([
