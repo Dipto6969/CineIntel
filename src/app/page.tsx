@@ -6,6 +6,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { Navbar } from "@/components/layout/Navbar";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import {
+  ChevronLeft,
   ChevronRight,
   Film,
   Sparkles,
@@ -13,9 +14,9 @@ import {
 import Image from "next/image";
 import type { TMDbSearchResponse, TMDbSearchResult } from "@/types/tmdb";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, FreeMode, Mousewheel } from "swiper/modules";
+import { FreeMode, Mousewheel } from "swiper/modules";
+import type { Swiper as SwiperInstance } from "swiper";
 import "swiper/css";
-import "swiper/css/navigation";
 import "swiper/css/free-mode";
 import type { DiscoverySectionKey } from "@/features/discovery/saved-queries";
 
@@ -79,12 +80,18 @@ function DiscoveryShelf({
   description,
   items,
   href,
+  ranked = false,
 }: {
   title: string;
   description: string;
   items: TMDbSearchResult[];
   href: string;
+  ranked?: boolean;
 }) {
+  const [swiper, setSwiper] = useState<SwiperInstance | null>(null);
+  const [canGoPrev, setCanGoPrev] = useState(false);
+  const [canGoNext, setCanGoNext] = useState(items.length > 0);
+
   if (items.length === 0) return null;
 
   return (
@@ -94,28 +101,66 @@ function DiscoveryShelf({
           <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">{title}</h2>
           <p className="text-sm text-zinc-500 max-w-2xl leading-relaxed">{description}</p>
         </div>
-        <Link href={href} className="text-xs font-semibold text-zinc-400 hover:text-white transition flex items-center gap-1 group">
-          Explore all <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-        </Link>
+        <div className="flex items-center gap-4 self-end sm:self-auto">
+          <Link href={href} className="text-xs font-semibold text-zinc-400 hover:text-white transition flex items-center gap-1 group">
+            Explore all <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+          <div className="flex items-center gap-1.5 border-l border-white/10 pl-3">
+            <button
+              type="button"
+              aria-label={`Previous ${title} titles`}
+              disabled={!canGoPrev}
+              onClick={() => swiper?.slidePrev()}
+              className="group/nav flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/3 text-zinc-400 transition-all duration-200 hover:border-[oklch(0.70_0.16_195)]/50 hover:bg-[oklch(0.70_0.16_195)]/10 hover:text-white active:scale-95 disabled:cursor-default disabled:opacity-35 disabled:hover:border-white/10 disabled:hover:bg-white/3"
+            >
+              <ChevronLeft className="h-4 w-4 transition-transform group-hover/nav:-translate-x-0.5" />
+            </button>
+            <button
+              type="button"
+              aria-label={`Next ${title} titles`}
+              disabled={!canGoNext}
+              onClick={() => swiper?.slideNext()}
+              className="group/nav flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/3 text-zinc-300 transition-all duration-200 hover:border-[oklch(0.70_0.16_195)]/50 hover:bg-[oklch(0.70_0.16_195)]/10 hover:text-white active:scale-95 disabled:cursor-default disabled:opacity-35 disabled:hover:border-white/10 disabled:hover:bg-white/3"
+            >
+              <ChevronRight className="h-4 w-4 transition-transform group-hover/nav:translate-x-0.5" />
+            </button>
+          </div>
+        </div>
       </div>
       <div className="w-full relative px-4 sm:px-6 md:px-12 max-w-400 mx-auto group">
         <Swiper
-          modules={[Navigation, FreeMode, Mousewheel]}
-          navigation
+          modules={[FreeMode, Mousewheel]}
+          onSwiper={(instance) => {
+            setSwiper(instance);
+            setCanGoPrev(!instance.isBeginning);
+            setCanGoNext(!instance.isEnd);
+          }}
+          onSlideChange={(instance) => {
+            setCanGoPrev(!instance.isBeginning);
+            setCanGoNext(!instance.isEnd);
+          }}
           freeMode={true}
           mousewheel={{ forceToAxis: true }}
           slidesPerView="auto"
           spaceBetween={16}
           className="media-swiper pb-8!"
         >
-          {items.map((item) => {
+          {items.map((item, index) => {
             const po = posterUrl(item.poster_path);
             return (
-              <SwiperSlide key={`${item.media_type}-${item.id}`} className="w-35! md:w-50!">
+              <SwiperSlide key={`${item.media_type}-${item.id}`} className={`${ranked ? "w-41! md:w-60!" : "w-35! md:w-50!"}`}>
                 <Link
                   href={`/media/${item.id}?type=${item.media_type}`}
-                  className="group/card relative block"
+                  className={`group/card relative block ${ranked ? "pl-7 md:pl-9" : ""}`}
                 >
+                  {ranked && (
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute left-0 bottom-[-0.45rem] z-20 font-black leading-none tracking-[-0.09em] text-transparent [-webkit-text-stroke:1.5px_rgba(255,255,255,0.82)] drop-shadow-[0_2px_3px_rgba(0,0,0,0.8)] text-[5.5rem] md:text-[7rem] transition-transform duration-300 group-hover/card:scale-105"
+                    >
+                      {index + 1}
+                    </span>
+                  )}
                   <div className="aspect-2/3 w-full rounded-2xl overflow-hidden bg-[#11131a] border border-white/5 relative transition-all duration-300 group-hover/card:scale-105 group-hover/card:shadow-[0_8px_30px_rgba(0,0,0,0.5)] group-hover/card:z-10 group-hover/card:border-white/20">
                     {po ? (
                       <Image
@@ -281,6 +326,7 @@ export default function Home() {
             description={section.description}
             items={section.items}
             href={section.exploreHref}
+            ranked={section.key === "trending"}
           />
         ))}
 
