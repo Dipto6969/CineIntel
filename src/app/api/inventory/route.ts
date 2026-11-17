@@ -94,30 +94,47 @@ export async function GET() {
 
   const { supabase, user } = auth;
 
-  const { data: inventory, error } = await supabase
-    .from("user_inventory")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  const inventoryPages = [];
+  let inventoryOffset = 0;
 
-  if (error) {
-    console.error("Inventory query failed", {
-      message: error.message,
-      code: error.code,
-      details: error.details,
-      hint: error.hint,
-    });
-    return NextResponse.json(
-      {
-        error: error.message,
-        stage: "inventory_query",
+  while (true) {
+    const { data: page, error } = await supabase
+      .from("user_inventory")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(inventoryOffset, inventoryOffset + QUERY_BATCH_SIZE - 1);
+
+    if (error) {
+      console.error("Inventory query failed", {
+        message: error.message,
         code: error.code,
         details: error.details,
         hint: error.hint,
-      },
-      { status: 500 }
-    );
+        offset: inventoryOffset,
+      });
+      return NextResponse.json(
+        {
+          error: error.message,
+          stage: "inventory_query",
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+        },
+        { status: 500 }
+      );
+    }
+
+    inventoryPages.push(page || []);
+    if (!page || page.length < QUERY_BATCH_SIZE) {
+      break;
+    }
+
+    inventoryOffset += QUERY_BATCH_SIZE;
   }
+
+  const inventory = inventoryPages.flat();
 
   if (!inventory || inventory.length === 0) {
     return NextResponse.json([]);
